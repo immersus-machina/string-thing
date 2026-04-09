@@ -52,9 +52,10 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         // Arrange
         var userId = 1;
 
-        // Act
         PostgresSql stmt = $"SELECT name FROM users WHERE id = {userId}";
         await using var command = stmt.ToCommand(postgres.DataSource);
+
+        // Act
         var result = await command.ExecuteScalarAsync(CancellationToken);
 
         // Assert
@@ -67,9 +68,10 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         // Arrange
         string? email = null;
 
-        // Act
         PostgresSql stmt = $"SELECT name FROM users WHERE email IS NOT DISTINCT FROM {email}";
         await using var command = stmt.ToCommand(postgres.DataSource);
+
+        // Act
         var result = await command.ExecuteScalarAsync(CancellationToken);
 
         // Assert
@@ -82,15 +84,16 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         // Arrange
         var ids = new[] { 1, 3 };
 
-        // Act
         PostgresSql stmt = $"SELECT name FROM users WHERE id = ANY({ids}) ORDER BY id";
         await using var command = stmt.ToCommand(postgres.DataSource);
-        var names = new List<string>();
+
+        // Act
         await using var reader = await command.ExecuteReaderAsync(CancellationToken);
-        while (await reader.ReadAsync(CancellationToken))
-            names.Add(reader.GetString(0));
 
         // Assert
+        var names = new List<string>();
+        while (await reader.ReadAsync(CancellationToken))
+            names.Add(reader.GetString(0));
         Assert.Equal(["alice", "carol"], names);
     }
 
@@ -100,15 +103,16 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         // Arrange
         string[] requiredTags = ["admin"];
 
-        // Act
         PostgresSql stmt = $"SELECT name FROM users WHERE tags @> {requiredTags} ORDER BY id";
         await using var command = stmt.ToCommand(postgres.DataSource);
-        var names = new List<string>();
+
+        // Act
         await using var reader = await command.ExecuteReaderAsync(CancellationToken);
-        while (await reader.ReadAsync(CancellationToken))
-            names.Add(reader.GetString(0));
 
         // Assert
+        var names = new List<string>();
+        while (await reader.ReadAsync(CancellationToken))
+            names.Add(reader.GetString(0));
         Assert.Equal(["alice", "carol"], names);
     }
 
@@ -119,15 +123,16 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         var minId = 1;
         var cutoff = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        // Act
         PostgresSql stmt = $"SELECT name FROM users WHERE id > {minId} AND created_at < {cutoff} ORDER BY id";
         await using var command = stmt.ToCommand(postgres.DataSource);
-        var names = new List<string>();
+
+        // Act
         await using var reader = await command.ExecuteReaderAsync(CancellationToken);
-        while (await reader.ReadAsync(CancellationToken))
-            names.Add(reader.GetString(0));
 
         // Assert
+        var names = new List<string>();
+        while (await reader.ReadAsync(CancellationToken))
+            names.Add(reader.GetString(0));
         Assert.Equal(["bob"], names);
     }
 
@@ -137,9 +142,10 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         // Arrange
         var searchTerm = "alice";
 
-        // Act
         PostgresSql stmt = $"SELECT name FROM users WHERE name = {searchTerm} OR email LIKE {searchTerm} || '%'";
         await using var command = stmt.ToCommand(postgres.DataSource);
+
+        // Act
         var result = await command.ExecuteScalarAsync(CancellationToken);
 
         // Assert
@@ -154,15 +160,16 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         var status = "admin";
         SqlFragment filter = $"id > {minId} AND tags @> ARRAY[{status}]";
 
-        // Act
         PostgresSql stmt = $"SELECT name FROM users WHERE {filter} ORDER BY id";
         await using var command = stmt.ToCommand(postgres.DataSource);
-        var names = new List<string>();
+
+        // Act
         await using var reader = await command.ExecuteReaderAsync(CancellationToken);
-        while (await reader.ReadAsync(CancellationToken))
-            names.Add(reader.GetString(0));
 
         // Assert
+        var names = new List<string>();
+        while (await reader.ReadAsync(CancellationToken))
+            names.Add(reader.GetString(0));
         Assert.Equal(["carol"], names);
     }
 
@@ -173,9 +180,10 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         var tableName = Sql.Unsafe("users");
         var userId = 2;
 
-        // Act
         PostgresSql stmt = $"SELECT name FROM {tableName} WHERE id = {userId}";
         await using var command = stmt.ToCommand(postgres.DataSource);
+
+        // Act
         var result = await command.ExecuteScalarAsync(CancellationToken);
 
         // Assert
@@ -200,9 +208,10 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
             new(3, "carol", "carol@example.com"),
         ];
 
-        // Act
         PostgresSql stmt = $"INSERT INTO pgrow_test (id, name, email) VALUES {PostgresSql.InsertRows(users)}";
         await using var command = stmt.ToCommand(postgres.DataSource);
+
+        // Act
         await command.ExecuteNonQueryAsync(CancellationToken);
 
         // Assert
@@ -222,9 +231,10 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         // Arrange
         InsertUser[] users = [new(1, "alice", null)];
 
-        // Act
         PostgresSql stmt = $"INSERT INTO pgrow_single_test (id, name, email) VALUES {PostgresSql.InsertRows(users)}";
         await using var command = stmt.ToCommand(postgres.DataSource);
+
+        // Act
         await command.ExecuteNonQueryAsync(CancellationToken);
 
         // Assert
@@ -243,12 +253,13 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         var names = new[] { "alice", "bob", "carol" };
         var emails = new[] { "alice@example.com", "bob@example.com", "carol@example.com" };
 
-        // Act
         PostgresSql stmt = $"""
             INSERT INTO unnest_test (id, name, email)
             SELECT * FROM UNNEST({ids}, {names}, {emails})
             """;
         await using var command = stmt.ToCommand(postgres.DataSource);
+
+        // Act
         await command.ExecuteNonQueryAsync(CancellationToken);
 
         // Assert
@@ -269,12 +280,13 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         var names = ids.Select(id => $"user_{id}").ToArray();
         var emails = ids.Select(id => $"user_{id}@example.com").ToArray();
 
-        // Act
         PostgresSql stmt = $"""
             INSERT INTO unnest_test (id, name, email)
             SELECT * FROM UNNEST({ids}, {names}, {emails})
             """;
         await using var command = stmt.ToCommand(postgres.DataSource);
+
+        // Act
         await command.ExecuteNonQueryAsync(CancellationToken);
 
         // Assert
@@ -291,12 +303,13 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         var names = new[] { "dave", "eve", "frank" };
         string?[] emails = ["dave@example.com", null, "frank@example.com"];
 
-        // Act
         PostgresSql stmt = $"""
             INSERT INTO unnest_test (id, name, email)
             SELECT * FROM UNNEST({ids}, {names}, {emails})
             """;
         await using var command = stmt.ToCommand(postgres.DataSource);
+
+        // Act
         await command.ExecuteNonQueryAsync(CancellationToken);
 
         // Assert

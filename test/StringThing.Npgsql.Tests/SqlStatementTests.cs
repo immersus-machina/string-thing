@@ -899,6 +899,24 @@ public class SqlStatementTests
         Assert.Single(stmt.Parameters);
     }
 
+    // --- Value capture behavior ---
+
+    [Fact]
+    public void WhenVariableChangesAfterFragmentCreation_FragmentRetainsOriginalValue()
+    {
+        // Arrange
+        var minAge = 18;
+        SqlFragment filter = $"age >= {minAge}";
+        minAge = 99;
+
+        // Act
+        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users WHERE {filter} OR age >= {minAge}";
+
+        // Assert
+        Assert.Equal(18, stmt.Parameters[0].Value);
+        Assert.Equal(99, stmt.Parameters[1].Value);
+    }
+
     // --- Large-scale composition stress tests ---
 
     [Fact]

@@ -1,0 +1,225 @@
+using Microsoft.Data.SqlClient;
+using Xunit;
+
+namespace StringThing.SqlClient.Tests;
+
+public class SqlStatementTests
+{
+    private static object?[] Values(IReadOnlyList<SqlParameter> parameters)
+    {
+        var result = new object?[parameters.Count];
+        for (var i = 0; i < parameters.Count; i++)
+            result[i] = parameters[i].Value;
+        return result;
+    }
+
+    [Fact]
+    public void WhenInterpolatingLiteralOnly_CapturesSqlAndProducesNoParameters()
+    {
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"SELECT 1";
+
+        // Assert
+        Assert.Equal("SELECT 1", stmt.Sql);
+        Assert.Empty(stmt.Parameters);
+    }
+
+    [Fact]
+    public void WhenInterpolatingSingleInteger_UsesNamedPlaceholder()
+    {
+        // Arrange
+        var userId = 42;
+
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM users WHERE id = {userId}";
+
+        // Assert
+        Assert.Equal("SELECT * FROM users WHERE id = @userId", stmt.Sql);
+        object[] expectedParameters = [42];
+        Assert.Equal(expectedParameters, Values(stmt.Parameters));
+    }
+
+    [Fact]
+    public void WhenInterpolatingMemberAccess_ReplacesDotsWithUnderscores()
+    {
+        // Arrange
+        var user = new { Id = 42 };
+
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM users WHERE id = {user.Id}";
+
+        // Assert
+        Assert.Equal("SELECT * FROM users WHERE id = @user_Id", stmt.Sql);
+    }
+
+    [Fact]
+    public void WhenInterpolatingSameVariableTwice_Deduplicates()
+    {
+        // Arrange
+        var matchValue = 99;
+
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"WHERE a = {matchValue} OR b = {matchValue}";
+
+        // Assert
+        Assert.Equal("WHERE a = @matchValue OR b = @matchValue", stmt.Sql);
+        Assert.Single(stmt.Parameters);
+    }
+
+    [Fact]
+    public void WhenInterpolatingDifferentVariables_ProducesDistinctParameters()
+    {
+        // Arrange
+        var firstName = "alice";
+        var lastName = "smith";
+
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"WHERE first = {firstName} AND last = {lastName}";
+
+        // Assert
+        Assert.Equal("WHERE first = @firstName AND last = @lastName", stmt.Sql);
+        Assert.Equal(2, stmt.Parameters.Count);
+    }
+
+    [Fact]
+    public void WhenInterpolatingInlineLiteral_FallsBackToIndexedName()
+    {
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM users WHERE id = {42}";
+
+        // Assert
+        Assert.Equal("SELECT * FROM users WHERE id = @p0", stmt.Sql);
+    }
+
+    [Fact]
+    public void WhenInterpolatingSqlUnsafe_SplicesRawText()
+    {
+        // Arrange
+        var tableName = Sql.Unsafe("users");
+        var userId = 1;
+
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
+
+        // Assert
+        Assert.Equal("SELECT * FROM users WHERE id = @userId", stmt.Sql);
+        Assert.Single(stmt.Parameters);
+    }
+
+    [Fact]
+    public void WhenInterpolatingMultipleTypes_CapturesAllCorrectly()
+    {
+        // Arrange
+        var name = "alice";
+        var age = 30;
+        var active = true;
+
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"WHERE name = {name} AND age = {age} AND active = {active}";
+
+        // Assert
+        Assert.Equal("WHERE name = @name AND age = @age AND active = @active", stmt.Sql);
+        object[] expectedParameters = ["alice", 30, true];
+        Assert.Equal(expectedParameters, Values(stmt.Parameters));
+    }
+
+    [Fact]
+    public void WhenInterpolatingNullString_ProducesDbNull()
+    {
+        // Arrange
+        string? email = null;
+
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"WHERE email = {email}";
+
+        // Assert
+        Assert.Equal("WHERE email = @email", stmt.Sql);
+        Assert.Equal(DBNull.Value, stmt.Parameters[0].Value);
+    }
+
+    [Fact]
+    public void WhenUsingIndexedNamer_ProducesIndexedPlaceholders()
+    {
+        // Arrange
+        var userId = 42;
+        var name = "alice";
+
+        // Act
+        SqlStatement<IndexedParameterNamer> stmt = $"WHERE id = {userId} AND name = {name}";
+
+        // Assert
+        Assert.Equal("WHERE id = @p0 AND name = @p1", stmt.Sql);
+    }
+
+    [Fact]
+    public void WhenSplicingFragment_ComposesCorrectly()
+    {
+        // Arrange
+        var minAge = 18;
+        var status = "active";
+        SqlFragment filter = $"age >= {minAge} AND status = {status}";
+
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM users WHERE {filter}";
+
+        // Assert
+        Assert.Contains("@filter_minAge", stmt.Sql);
+        Assert.Contains("@filter_status", stmt.Sql);
+        Assert.Equal(2, stmt.Parameters.Count);
+    }
+
+    [Fact]
+    public void WhenVariableChangesAfterFragmentCreation_FragmentRetainsOriginalValue()
+    {
+        // Arrange
+        var minAge = 18;
+        SqlFragment filter = $"age >= {minAge}";
+        minAge = 99;
+
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM users WHERE {filter} OR age >= {minAge}";
+
+        // Assert
+        Assert.Equal(18, stmt.Parameters[0].Value);
+        Assert.Equal(99, stmt.Parameters[1].Value);
+    }
+
+    [Fact]
+    public void WhenLiteralIsMissingWhitespace_ReproducesFaithfullyWithoutFixing()
+    {
+        // Arrange
+        var value = 42;
+
+        // Act
+        SqlStatement<NamedParameterNamer> stmt = $"WHERE true OR{value}";
+
+        // Assert
+        Assert.Equal("WHERE true OR@value", stmt.Sql);
+    }
+
+    [Fact]
+    public void WhenUnderscoreInExpression_Throws()
+    {
+        // Arrange
+        var user_id = 42;
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            SqlStatement<NamedParameterNamer> stmt = $"WHERE id = {user_id}";
+        });
+    }
+
+    [Fact]
+    public void WhenExpressionCollidesWithIndexedPlaceholder_Throws()
+    {
+        // Arrange
+        var p3 = 42;
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            SqlStatement<NamedParameterNamer> stmt = $"WHERE id = {p3}";
+        });
+    }
+}

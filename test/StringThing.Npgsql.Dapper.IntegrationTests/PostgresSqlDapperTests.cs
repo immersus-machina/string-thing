@@ -60,8 +60,9 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
         // Arrange
         await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
 
-        // Act
         var maxId = 3;
+
+        // Act
         var users = (await connection.QueryAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id <= {maxId} ORDER BY id",
             CancellationToken)).ToList();
@@ -81,8 +82,9 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
         var minId = 1;
         var excludeName = "carol";
 
-        // Act
         var maxId = 3;
+
+        // Act
         var users = (await connection.QueryAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id > {minId} AND id <= {maxId} AND name != {excludeName} ORDER BY id",
             CancellationToken)).ToList();
@@ -148,11 +150,11 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
         var name = "dave";
         string? email = null;
 
-        // Act
         await connection.ExecuteAsync(
             $"INSERT INTO dapper_users (id, name, email) VALUES ({id}, {name}, {email}) ON CONFLICT (id) DO NOTHING",
             CancellationToken);
 
+        // Act
         var user = await connection.QuerySingleAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id = {id}",
             CancellationToken);
