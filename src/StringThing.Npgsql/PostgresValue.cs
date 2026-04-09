@@ -82,6 +82,8 @@ public readonly record struct PostgresValue : IUnion
         NpgsqlTsQueryArray,
         BigIntegerArray,
         CharArray,
+        Jsonb,
+        JsonbArray,
         DbNull,
     }
 
@@ -563,6 +565,23 @@ public readonly record struct PostgresValue : IUnion
         _tag = Tag.CharArray;
         _valueSlot = default;
         _referenceSlot = value;
+    }
+
+    public PostgresValue(IPostgresJson value)
+    {
+        _tag = Tag.Jsonb;
+        _valueSlot = default;
+        _referenceSlot = value.ToJson();
+    }
+
+    public PostgresValue(IPostgresJson[] values)
+    {
+        _tag = Tag.JsonbArray;
+        _valueSlot = default;
+        var jsonStrings = new string[values.Length];
+        for (var i = 0; i < values.Length; i++)
+            jsonStrings[i] = values[i].ToJson();
+        _referenceSlot = jsonStrings;
     }
 
     private PostgresValue(Tag tag)
@@ -1256,6 +1275,8 @@ public readonly record struct PostgresValue : IUnion
         Tag.NpgsqlTsQueryArray => new NpgsqlParameter<NpgsqlTsQuery[]>("", (NpgsqlTsQuery[])_referenceSlot!),
         Tag.BigIntegerArray => new NpgsqlParameter<BigInteger[]>("", (BigInteger[])_referenceSlot!),
         Tag.CharArray => new NpgsqlParameter<char[]>("", (char[])_referenceSlot!),
+        Tag.Jsonb => new NpgsqlParameter { Value = (string)_referenceSlot!, NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb },
+        Tag.JsonbArray => new NpgsqlParameter { Value = (string[])_referenceSlot!, NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb | NpgsqlTypes.NpgsqlDbType.Array },
         Tag.DbNull => new NpgsqlParameter { Value = DBNull.Value },
         _ => throw new InvalidOperationException($"PostgresValue has no value (tag: {_tag})"),
     };

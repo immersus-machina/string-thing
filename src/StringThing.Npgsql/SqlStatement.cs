@@ -37,6 +37,26 @@ public class SqlStatement<TNamer> where TNamer : IParameterNamer
         => AppendParameter(value.HasValue ? value.Value.ToNpgsqlParameter() : new NpgsqlParameter { Value = DBNull.Value }, expression);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void AppendFormatted(IPostgresJson value,
+        [CallerArgumentExpression(nameof(value))] string? expression = null)
+        => AppendParameter(new PostgresValue(value).ToNpgsqlParameter(), expression);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void AppendFormatted(IPostgresJson[] values,
+        [CallerArgumentExpression(nameof(values))] string? expression = null)
+        => AppendParameter(new PostgresValue(values).ToNpgsqlParameter(), expression);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void AppendFormatted(System.Text.Json.JsonDocument value,
+        [CallerArgumentExpression(nameof(value))] string? expression = null)
+        => AppendParameter(new NpgsqlParameter { Value = value, NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb }, expression);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void AppendFormatted(System.Text.Json.JsonElement value,
+        [CallerArgumentExpression(nameof(value))] string? expression = null)
+        => AppendParameter(new NpgsqlParameter { Value = value, NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb }, expression);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendFormatted(UnsafeSql rawSqlFragment)
     {
         _sql.Append(rawSqlFragment.RawText);

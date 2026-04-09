@@ -133,6 +133,14 @@ public class PostgresValueTests
             data.Add(new[] { new NpgsqlCircle(1, 2, 3) }, new[] { new NpgsqlCircle(1, 2, 3) }, typeof(NpgsqlCircle[]));
             data.Add(new[] { new NpgsqlLine(1, 2, 3) }, new[] { new NpgsqlLine(1, 2, 3) }, typeof(NpgsqlLine[]));
             data.Add(new[] { new NpgsqlLSeg(0, 0, 1, 1) }, new[] { new NpgsqlLSeg(0, 0, 1, 1) }, typeof(NpgsqlLSeg[]));
+            data.Add(new[] { new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.FromHours(2)) }, new[] { new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.FromHours(2)) }, typeof(DateTimeOffset[]));
+            data.Add(new[] { new NpgsqlInterval(1, 2, 3) }, new[] { new NpgsqlInterval(1, 2, 3) }, typeof(NpgsqlInterval[]));
+            data.Add(new[] { new NpgsqlInet(IPAddress.Loopback, 32) }, new[] { new NpgsqlInet(IPAddress.Loopback, 32) }, typeof(NpgsqlInet[]));
+            data.Add(new[] { new NpgsqlCidr(IPAddress.Loopback, 24) }, new[] { new NpgsqlCidr(IPAddress.Loopback, 24) }, typeof(NpgsqlCidr[]));
+            data.Add(new[] { new NpgsqlPath(new NpgsqlPoint(0, 0), new NpgsqlPoint(1, 1)) }, new[] { new NpgsqlPath(new NpgsqlPoint(0, 0), new NpgsqlPoint(1, 1)) }, typeof(NpgsqlPath[]));
+            data.Add(new[] { new NpgsqlPolygon(new NpgsqlPoint(0, 0), new NpgsqlPoint(1, 0), new NpgsqlPoint(0, 1)) }, new[] { new NpgsqlPolygon(new NpgsqlPoint(0, 0), new NpgsqlPoint(1, 0), new NpgsqlPoint(0, 1)) }, typeof(NpgsqlPolygon[]));
+            data.Add(new[] { PhysicalAddress.Parse("00-11-22-33-44-55") }, new[] { PhysicalAddress.Parse("00-11-22-33-44-55") }, typeof(PhysicalAddress[]));
+            data.Add(new[] { BigInteger.Parse("999999999") }, new[] { BigInteger.Parse("999999999") }, typeof(BigInteger[]));
 
             return data;
         }
@@ -177,5 +185,57 @@ public class PostgresValueTests
         Assert.Equal(DateTimeKind.Utc, ((DateTime)utcParam.Value!).Kind);
         Assert.Equal(DateTimeKind.Local, ((DateTime)localParam.Value!).Kind);
         Assert.Equal(DateTimeKind.Unspecified, ((DateTime)unspecifiedParam.Value!).Kind);
+    }
+
+    private record TestJsonType(string Name, int Age) : IPostgresJson
+    {
+        public string ToJson() => $$"""
+            {"name":"{{Name}}","age":{{Age}}}
+            """.Trim();
+    }
+
+    [Fact]
+    public void ToNpgsqlParameter_IPostgresJson_ProducesJsonbParameter()
+    {
+        // Arrange
+        var value = new TestJsonType("alice", 30);
+
+        // Act
+        var postgresValue = new PostgresValue(value);
+        var parameter = postgresValue.ToNpgsqlParameter();
+
+        // Assert
+        Assert.Equal("""{"name":"alice","age":30}""", parameter.Value);
+        Assert.Equal(NpgsqlDbType.Jsonb, parameter.NpgsqlDbType);
+    }
+
+    [Fact]
+    public void ToNpgsqlParameter_IPostgresJsonArray_ProducesJsonbArrayParameter()
+    {
+        // Arrange
+        TestJsonType[] values = [new("alice", 30), new("bob", 25)];
+
+        // Act
+        var postgresValue = new PostgresValue(values);
+        var parameter = postgresValue.ToNpgsqlParameter();
+
+        // Assert
+        var strings = (string[])parameter.Value!;
+        Assert.Equal("""{"name":"alice","age":30}""", strings[0]);
+        Assert.Equal("""{"name":"bob","age":25}""", strings[1]);
+    }
+
+    [Fact]
+    public void WhenInterpolatingIPostgresJson_CapturesAsJsonbParameter()
+    {
+        // Arrange
+        var user = new TestJsonType("alice", 30);
+
+        // Act
+        PostgresSql stmt = $"INSERT INTO t (data) VALUES ({user})";
+
+        // Assert
+        Assert.Equal("INSERT INTO t (data) VALUES ($1)", stmt.Sql);
+        Assert.Equal("""{"name":"alice","age":30}""", stmt.Parameters[0].Value);
     }
 }
