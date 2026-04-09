@@ -2,10 +2,7 @@ namespace StringThing;
 
 public interface IParameterNamer
 {
-    static abstract void WritePlaceholder(
+    static abstract string WritePlaceholder(
         int parameterIndex,
-        ReadOnlySpan<char> capturedExpression,
-        Span<char> destination,
-        int maxCharsToWrite,
-        out int charactersWritten);
+        string? capturedExpression);
 }

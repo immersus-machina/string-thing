@@ -7,7 +7,7 @@ namespace StringThing.Npgsql;
 [InterpolatedStringHandler]
 public class SqlStatement<TNamer> where TNamer : IParameterNamer
 {
-    private const int MaxCharsPerPlaceholder = 32;
+    private const int EstimatedCharsPerPlaceholder = 16;
 
     private readonly StringBuilder _sql;
     private readonly List<NpgsqlParameter> _parameters;
@@ -15,7 +15,7 @@ public class SqlStatement<TNamer> where TNamer : IParameterNamer
 
     public SqlStatement(int literalLength, int formattedCount)
     {
-        _sql = new StringBuilder(literalLength + (formattedCount * MaxCharsPerPlaceholder));
+        _sql = new StringBuilder(literalLength + (formattedCount * EstimatedCharsPerPlaceholder));
         _parameters = new List<NpgsqlParameter>(formattedCount);
         _parameterNames = new List<string?>(formattedCount);
     }
@@ -86,15 +86,7 @@ public class SqlStatement<TNamer> where TNamer : IParameterNamer
     private void AppendParameter(NpgsqlParameter parameter, string? expression, bool allowDeduplication = true)
     {
         var slotIndex = FindOrAddSlot(parameter, expression, allowDeduplication);
-
-        Span<char> placeholderBuffer = stackalloc char[MaxCharsPerPlaceholder];
-        TNamer.WritePlaceholder(
-            slotIndex,
-            (expression ?? string.Empty).AsSpan(),
-            placeholderBuffer,
-            MaxCharsPerPlaceholder,
-            out var charactersWritten);
-        _sql.Append(placeholderBuffer[..charactersWritten]);
+        _sql.Append(TNamer.WritePlaceholder(slotIndex, expression));
     }
 
     private int FindOrAddSlot(NpgsqlParameter parameter, string? expression, bool allowDeduplication)

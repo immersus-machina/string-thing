@@ -27,17 +27,10 @@ public static class SqlStatementExtensions
     {
         var parameters = statement.Parameters;
         var parameterNames = statement.ParameterNames;
-        Span<char> nameBuffer = stackalloc char[32];
 
         for (var i = 0; i < parameters.Count; i++)
         {
-            TNamer.WritePlaceholder(
-                i,
-                (parameterNames[i] ?? string.Empty).AsSpan(),
-                nameBuffer,
-                32,
-                out var nameLength);
-            parameters[i].ParameterName = nameBuffer[..nameLength].ToString();
+            parameters[i].ParameterName = TNamer.WritePlaceholder(i, parameterNames[i]);
             command.Parameters.Add(parameters[i]);
         }
     }
