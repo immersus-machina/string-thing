@@ -812,7 +812,7 @@ public class SqlStatementTests
     public void WhenInterpolatingStringList_CapturesAsArrayParameter()
     {
         // Arrange
-        IReadOnlyList<string> tags = new List<string> { "a", "b", "c" };
+        string[] tags = ["a", "b", "c"];
 
         // Act
         SqlStatement<PostgresParameterNamer> stmt = $"WHERE tags @> {tags}";
@@ -827,7 +827,7 @@ public class SqlStatementTests
     public void WhenInterpolatingIPAddressArray_CapturesAsArrayParameter()
     {
         // Arrange
-        IReadOnlyList<IPAddress> ips = new[] { IPAddress.Loopback, IPAddress.IPv6Loopback };
+        IPAddress[] ips = [IPAddress.Loopback, IPAddress.IPv6Loopback];
 
         // Act
         SqlStatement<PostgresParameterNamer> stmt = $"WHERE ip = ANY({ips})";

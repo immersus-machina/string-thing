@@ -1,0 +1,167 @@
+using System.Collections;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Numerics;
+using NpgsqlTypes;
+using Xunit;
+
+namespace StringThing.Npgsql.Tests;
+
+public class PostgresValueTests
+{
+    public static TheoryData<PostgresValue, object?> ScalarRoundTripData => new()
+    {
+        { true, true },
+        { false, false },
+        { (short)42, (short)42 },
+        { 42, 42 },
+        { 42L, 42L },
+        { 3.14f, 3.14f },
+        { 2.71828, 2.71828 },
+        { 99.99m, 99.99m },
+        { 'A', 'A' },
+        { Guid.Parse("12345678-1234-1234-1234-123456789012"), Guid.Parse("12345678-1234-1234-1234-123456789012") },
+        { new DateTime(2026, 4, 7, 12, 0, 0, DateTimeKind.Utc), new DateTime(2026, 4, 7, 12, 0, 0, DateTimeKind.Utc) },
+        { new DateTimeOffset(2026, 4, 7, 12, 0, 0, TimeSpan.FromHours(2)), new DateTimeOffset(2026, 4, 7, 12, 0, 0, TimeSpan.FromHours(2)) },
+        { new DateOnly(2026, 4, 7), new DateOnly(2026, 4, 7) },
+        { new TimeOnly(12, 30, 45), new TimeOnly(12, 30, 45) },
+        { TimeSpan.FromHours(36), TimeSpan.FromHours(36) },
+        { new NpgsqlPoint(1.5, 2.5), new NpgsqlPoint(1.5, 2.5) },
+        { "hello", "hello" },
+        { BigInteger.Parse("99999999999999999999"), BigInteger.Parse("99999999999999999999") },
+    };
+
+    [Theory]
+    [MemberData(nameof(ScalarRoundTripData))]
+    public void ToNpgsqlParameter_RoundTripsScalarValue(PostgresValue postgresValue, object? expectedValue)
+    {
+        // Act
+        var parameter = postgresValue.ToNpgsqlParameter();
+
+        // Assert
+        Assert.Equal(expectedValue, parameter.Value);
+    }
+
+    public static TheoryData<PostgresValue, object?> ReferenceTypeRoundTripData
+    {
+        get
+        {
+            var data = new TheoryData<PostgresValue, object?>();
+
+            var bytes = new byte[] { 0x01, 0x02, 0x03 };
+            data.Add(bytes, bytes);
+
+            var bits = new BitArray([true, false, true]);
+            data.Add(bits, bits);
+
+            var ip = IPAddress.Parse("192.168.1.1");
+            data.Add(ip, ip);
+
+            var mac = PhysicalAddress.Parse("00-11-22-33-44-55");
+            data.Add(mac, mac);
+
+            return data;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(ReferenceTypeRoundTripData))]
+    public void ToNpgsqlParameter_RoundTripsReferenceTypeValue(PostgresValue postgresValue, object? expectedValue)
+    {
+        // Act
+        var parameter = postgresValue.ToNpgsqlParameter();
+
+        // Assert
+        Assert.Same(expectedValue, parameter.Value);
+    }
+
+    public static TheoryData<PostgresValue, object?, Type> BoxedValueTypeRoundTripData
+    {
+        get
+        {
+            var data = new TheoryData<PostgresValue, object?, Type>();
+
+            data.Add(new NpgsqlInet(IPAddress.Loopback, 32), new NpgsqlInet(IPAddress.Loopback, 32), typeof(NpgsqlInet));
+            data.Add(new NpgsqlBox(1, 2, 0, 0), new NpgsqlBox(1, 2, 0, 0), typeof(NpgsqlBox));
+            data.Add(new NpgsqlLSeg(0, 0, 1, 1), new NpgsqlLSeg(0, 0, 1, 1), typeof(NpgsqlLSeg));
+            data.Add(new NpgsqlCircle(1, 2, 3), new NpgsqlCircle(1, 2, 3), typeof(NpgsqlCircle));
+            data.Add(new NpgsqlLine(1, 2, 3), new NpgsqlLine(1, 2, 3), typeof(NpgsqlLine));
+            data.Add(new NpgsqlRange<int>(1, 10), new NpgsqlRange<int>(1, 10), typeof(NpgsqlRange<int>));
+            data.Add(new NpgsqlRange<DateOnly>(new DateOnly(2026, 1, 1), new DateOnly(2026, 12, 31)),
+                     new NpgsqlRange<DateOnly>(new DateOnly(2026, 1, 1), new DateOnly(2026, 12, 31)),
+                     typeof(NpgsqlRange<DateOnly>));
+
+            return data;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(BoxedValueTypeRoundTripData))]
+    public void ToNpgsqlParameter_RoundTripsBoxedValueType(PostgresValue postgresValue, object? expectedValue, Type expectedType)
+    {
+        // Act
+        var parameter = postgresValue.ToNpgsqlParameter();
+
+        // Assert
+        Assert.Equal(expectedValue, parameter.Value);
+        Assert.IsType(expectedType, parameter.Value);
+    }
+
+    public static TheoryData<PostgresValue, object?, Type> ArrayRoundTripData
+    {
+        get
+        {
+            var data = new TheoryData<PostgresValue, object?, Type>();
+
+            data.Add(new[] { 1, 2, 3 }, new[] { 1, 2, 3 }, typeof(int[]));
+            data.Add(new[] { "a", "b" }, new[] { "a", "b" }, typeof(string[]));
+            data.Add(new[] { 1L, 2L }, new[] { 1L, 2L }, typeof(long[]));
+            data.Add(new[] { true, false }, new[] { true, false }, typeof(bool[]));
+            data.Add(new[] { 1.5, 2.5 }, new[] { 1.5, 2.5 }, typeof(double[]));
+            data.Add(new[] { IPAddress.Loopback }, new[] { IPAddress.Loopback }, typeof(IPAddress[]));
+
+            return data;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(ArrayRoundTripData))]
+    public void ToNpgsqlParameter_RoundTripsArrayValue(PostgresValue postgresValue, object? expectedValue, Type expectedType)
+    {
+        // Act
+        var parameter = postgresValue.ToNpgsqlParameter();
+
+        // Assert
+        Assert.Equal(expectedValue, parameter.Value);
+        Assert.IsType(expectedType, parameter.Value);
+    }
+
+    [Fact]
+    public void ToNpgsqlParameter_DbNull_ProducesDbNullValue()
+    {
+        // Act
+        var parameter = PostgresValue.Null.ToNpgsqlParameter();
+
+        // Assert
+        Assert.Equal(DBNull.Value, parameter.Value);
+    }
+
+    [Fact]
+    public void ToNpgsqlParameter_DateTimePreservesKind()
+    {
+        // Arrange
+        var utc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var local = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Local);
+        var unspecified = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+
+        // Act
+        var utcParam = ((PostgresValue)utc).ToNpgsqlParameter();
+        var localParam = ((PostgresValue)local).ToNpgsqlParameter();
+        var unspecifiedParam = ((PostgresValue)unspecified).ToNpgsqlParameter();
+
+        // Assert
+        Assert.Equal(DateTimeKind.Utc, ((DateTime)utcParam.Value!).Kind);
+        Assert.Equal(DateTimeKind.Local, ((DateTime)localParam.Value!).Kind);
+        Assert.Equal(DateTimeKind.Unspecified, ((DateTime)unspecifiedParam.Value!).Kind);
+    }
+}

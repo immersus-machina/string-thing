@@ -2,7 +2,7 @@ using Xunit;
 
 namespace StringThing.Npgsql.IntegrationTests;
 
-public class SqlStatementIntegrationTests(PostgresFixture postgres) : IClassFixture<PostgresFixture>, IAsyncLifetime
+public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixture<PostgresFixture>, IAsyncLifetime
 {
     private static CancellationToken CancellationToken => TestContext.Current.CancellationToken;
 
@@ -93,7 +93,7 @@ public class SqlStatementIntegrationTests(PostgresFixture postgres) : IClassFixt
     public async Task WhenQueryingWithStringArrayContainment_ReturnsMatchingRows()
     {
         // Arrange
-        IReadOnlyList<string> requiredTags = ["admin"];
+        string[] requiredTags = ["admin"];
 
         // Act
         PostgresSql stmt = $"SELECT name FROM users WHERE tags @> {requiredTags} ORDER BY id";
