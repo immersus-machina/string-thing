@@ -28,6 +28,11 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
                 name text NOT NULL,
                 email text
             );
+            CREATE TABLE IF NOT EXISTS unnest_test (
+                id integer PRIMARY KEY,
+                name text NOT NULL,
+                email text
+            );
             """);
         await createUsers.ExecuteNonQueryAsync(CancellationToken);
 
@@ -226,5 +231,80 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         await using var verify = postgres.DataSource.CreateCommand("SELECT name FROM pgrow_single_test");
         var result = await verify.ExecuteScalarAsync(CancellationToken);
         Assert.Equal("alice", result);
+    }
+
+    // --- Batch insert with UNNEST ---
+
+    [Fact]
+    public async Task WhenInsertingWithUnnest_InsertsAllRows()
+    {
+        // Arrange
+        var ids = new[] { 10, 11, 12 };
+        var names = new[] { "alice", "bob", "carol" };
+        var emails = new[] { "alice@example.com", "bob@example.com", "carol@example.com" };
+
+        // Act
+        PostgresSql stmt = $"""
+            INSERT INTO unnest_test (id, name, email)
+            SELECT * FROM UNNEST({ids}, {names}, {emails})
+            """;
+        await using var command = stmt.ToCommand(postgres.DataSource);
+        await command.ExecuteNonQueryAsync(CancellationToken);
+
+        // Assert
+        await using var verify = postgres.DataSource.CreateCommand("SELECT name FROM unnest_test WHERE id BETWEEN 10 AND 12 ORDER BY id");
+        var results = new List<string>();
+        await using var reader = await verify.ExecuteReaderAsync(CancellationToken);
+        while (await reader.ReadAsync(CancellationToken))
+            results.Add(reader.GetString(0));
+        Assert.Equal(["alice", "bob", "carol"], results);
+    }
+
+    [Fact]
+    public async Task WhenInsertingManyRowsWithUnnest_HandlesLargeBatch()
+    {
+        // Arrange
+        const int rowCount = 200;
+        var ids = Enumerable.Range(1000, rowCount).ToArray();
+        var names = ids.Select(id => $"user_{id}").ToArray();
+        var emails = ids.Select(id => $"user_{id}@example.com").ToArray();
+
+        // Act
+        PostgresSql stmt = $"""
+            INSERT INTO unnest_test (id, name, email)
+            SELECT * FROM UNNEST({ids}, {names}, {emails})
+            """;
+        await using var command = stmt.ToCommand(postgres.DataSource);
+        await command.ExecuteNonQueryAsync(CancellationToken);
+
+        // Assert
+        await using var countCmd = postgres.DataSource.CreateCommand("SELECT COUNT(*) FROM unnest_test WHERE id >= 1000");
+        var count = (long)(await countCmd.ExecuteScalarAsync(CancellationToken))!;
+        Assert.Equal(rowCount, count);
+    }
+
+    [Fact]
+    public async Task WhenInsertingWithUnnestAndNullableColumn_HandlesNulls()
+    {
+        // Arrange
+        var ids = new[] { 100, 101, 102 };
+        var names = new[] { "dave", "eve", "frank" };
+        string?[] emails = ["dave@example.com", null, "frank@example.com"];
+
+        // Act
+        PostgresSql stmt = $"""
+            INSERT INTO unnest_test (id, name, email)
+            SELECT * FROM UNNEST({ids}, {names}, {emails})
+            """;
+        await using var command = stmt.ToCommand(postgres.DataSource);
+        await command.ExecuteNonQueryAsync(CancellationToken);
+
+        // Assert
+        await using var verify = postgres.DataSource.CreateCommand("SELECT email FROM unnest_test WHERE id BETWEEN 100 AND 102 ORDER BY id");
+        var results = new List<string?>();
+        await using var reader = await verify.ExecuteReaderAsync(CancellationToken);
+        while (await reader.ReadAsync(CancellationToken))
+            results.Add(reader.IsDBNull(0) ? null : reader.GetString(0));
+        Assert.Equal(["dave@example.com", null, "frank@example.com"], results);
     }
 }

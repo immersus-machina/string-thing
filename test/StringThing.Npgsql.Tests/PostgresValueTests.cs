@@ -168,6 +168,28 @@ public class PostgresValueTests
         Assert.Equal(DBNull.Value, parameter.Value);
     }
 
+    public static TheoryData<PostgresValue> NullReferenceTypeData => new()
+    {
+        (string?)null,
+        (byte[]?)null,
+        (BitArray?)null,
+        (IPAddress?)null,
+        (PhysicalAddress?)null,
+        (NpgsqlTsVector?)null,
+        (NpgsqlTsQuery?)null,
+    };
+
+    [Theory]
+    [MemberData(nameof(NullReferenceTypeData))]
+    public void ToNpgsqlParameter_NullReferenceType_ProducesDbNull(PostgresValue postgresValue)
+    {
+        // Act
+        var parameter = postgresValue.ToNpgsqlParameter();
+
+        // Assert
+        Assert.Equal(DBNull.Value, parameter.Value);
+    }
+
     [Fact]
     public void ToNpgsqlParameter_DateTimePreservesKind()
     {
