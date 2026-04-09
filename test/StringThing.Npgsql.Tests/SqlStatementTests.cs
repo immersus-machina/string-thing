@@ -4,17 +4,16 @@ using System.Net.NetworkInformation;
 using System.Numerics;
 using Npgsql;
 using NpgsqlTypes;
-using StringThing.Npgsql;
 using Xunit;
 
 namespace StringThing.Npgsql.Tests;
 
 public class SqlStatementTests
 {
-    private static object?[] Values(ReadOnlySpan<NpgsqlParameter> parameters)
+    private static object?[] Values(IReadOnlyList<NpgsqlParameter> parameters)
     {
-        var result = new object?[parameters.Length];
-        for (var i = 0; i < parameters.Length; i++)
+        var result = new object?[parameters.Count];
+        for (var i = 0; i < parameters.Count; i++)
             result[i] = parameters[i].Value;
         return result;
     }
@@ -26,11 +25,11 @@ public class SqlStatementTests
     public void WhenInterpolatingLiteralOnly_CapturesSqlAndProducesNoParameters()
     {
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"SELECT 1";
+        SqlStatement<PostgresParameterNamer> stmt = $"SELECT 1";
 
         // Assert
-        Assert.Equal("SELECT 1", stmt.Sql.ToString());
-        Assert.Equal(0, stmt.Parameters.Length);
+        Assert.Equal("SELECT 1", stmt.Sql);
+        Assert.Empty(stmt.Parameters);
     }
 
     [Fact]
@@ -40,12 +39,25 @@ public class SqlStatementTests
         var userId = 42;
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users WHERE id = {userId}";
+        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users WHERE id = {userId}";
 
         // Assert
         object[] expectedParameters = [42];
-        Assert.Equal("SELECT * FROM users WHERE id = $1", stmt.Sql.ToString());
+        Assert.Equal("SELECT * FROM users WHERE id = $1", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
+    }
+
+    [Fact]
+    public void WhenLiteralIsMissingWhitespace_ReproducesFaithfullyWithoutFixing()
+    {
+        // Arrange
+        var value = 42;
+
+        // Act
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE true OR{value}";
+
+        // Assert
+        Assert.Equal("WHERE true OR$1", stmt.Sql);
     }
 
     [Fact]
@@ -55,11 +67,11 @@ public class SqlStatementTests
         var name = "alice";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users WHERE name = {name}";
+        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users WHERE name = {name}";
 
         // Assert
         object[] expectedParameters = ["alice"];
-        Assert.Equal("SELECT * FROM users WHERE name = $1", stmt.Sql.ToString());
+        Assert.Equal("SELECT * FROM users WHERE name = $1", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -72,11 +84,11 @@ public class SqlStatementTests
         var third = 3;
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"a={first}, b={second}, c={third}";
+        SqlStatement<PostgresParameterNamer> stmt = $"a={first}, b={second}, c={third}";
 
         // Assert
         object[] expectedParameters = [1, 2, 3];
-        Assert.Equal("a=$1, b=$2, c=$3", stmt.Sql.ToString());
+        Assert.Equal("a=$1, b=$2, c=$3", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -89,11 +101,11 @@ public class SqlStatementTests
         var age = 30;
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE id={userId} AND name={name} AND age={age}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE id={userId} AND name={name} AND age={age}";
 
         // Assert
         object[] expectedParameters = [7, "bob", 30];
-        Assert.Equal("WHERE id=$1 AND name=$2 AND age=$3", stmt.Sql.ToString());
+        Assert.Equal("WHERE id=$1 AND name=$2 AND age=$3", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -104,11 +116,11 @@ public class SqlStatementTests
         var matchValue = 99;
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"a={matchValue} OR b={matchValue}";
+        SqlStatement<PostgresParameterNamer> stmt = $"a={matchValue} OR b={matchValue}";
 
         // Assert
         object[] expectedParameters = [99];
-        Assert.Equal("a=$1 OR b=$1", stmt.Sql.ToString());
+        Assert.Equal("a=$1 OR b=$1", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -119,12 +131,12 @@ public class SqlStatementTests
         var searchTerm = "alice";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"WHERE myOption.name = {searchTerm} OR yourOption.name = {searchTerm}";
 
         // Assert
         object[] expectedParameters = ["alice"];
-        Assert.Equal("WHERE myOption.name = $1 OR yourOption.name = $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE myOption.name = $1 OR yourOption.name = $1", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -136,11 +148,11 @@ public class SqlStatementTests
         var secondUserId = 99;
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"a={firstUserId} OR b={secondUserId}";
+        SqlStatement<PostgresParameterNamer> stmt = $"a={firstUserId} OR b={secondUserId}";
 
         // Assert
         object[] expectedParameters = [99, 99];
-        Assert.Equal("a=$1 OR b=$2", stmt.Sql.ToString());
+        Assert.Equal("a=$1 OR b=$2", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -148,12 +160,12 @@ public class SqlStatementTests
     public void WhenInterpolatingTwelveParameters_UsesTwoCharacterPlaceholdersForTenAndAbove()
     {
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}";
 
         // Assert
         object[] expectedParameters = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-        Assert.Equal("$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12", stmt.Sql.ToString());
+        Assert.Equal("$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -177,12 +189,12 @@ public class SqlStatementTests
         byte[] byteArrayValue = [0x01, 0x02, 0x03];
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"{boolValue},{shortValue},{intValue},{longValue},{floatValue},{doubleValue},{decimalValue},{guidValue},{dateTimeValue},{dateTimeOffsetValue},{dateOnlyValue},{timeOnlyValue},{stringValue},{byteArrayValue}";
 
         // Assert
-        Assert.Equal("$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14", stmt.Sql.ToString());
-        Assert.Equal(14, stmt.Parameters.Length);
+        Assert.Equal("$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14", stmt.Sql);
+        Assert.Equal(14, stmt.Parameters.Count);
 
         Assert.True(TypedValue<bool>(stmt.Parameters[0]));
         Assert.Equal((short)100, TypedValue<short>(stmt.Parameters[1]));
@@ -209,7 +221,7 @@ public class SqlStatementTests
         var localDateTime = new DateTime(2026, 4, 7, 12, 0, 0, DateTimeKind.Local);
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"{utcDateTime},{unspecifiedDateTime},{localDateTime}";
 
         // Assert
@@ -225,7 +237,7 @@ public class SqlStatementTests
         byte[] payload = [0x01, 0x02, 0x03, 0x04];
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"{payload}";
+        SqlStatement<PostgresParameterNamer> stmt = $"{payload}";
 
         // Assert
         Assert.Same(payload, TypedValue<byte[]>(stmt.Parameters[0]));
@@ -238,11 +250,11 @@ public class SqlStatementTests
         var userId = 42;
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"SELECT * FROM users WHERE id = {userId}";
 
         // Assert
-        Assert.Equal(1, stmt.ParameterNames.Length);
+        Assert.Single(stmt.ParameterNames);
         Assert.Equal("userId", stmt.ParameterNames[0]);
     }
 
@@ -255,12 +267,12 @@ public class SqlStatementTests
         var orderStatus = "shipped";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"WHERE customer_id = {customerId} AND total >= {minOrderAmount} AND status = {orderStatus}";
 
         // Assert
         string?[] expectedNames = ["customerId", "minOrderAmount", "orderStatus"];
-        Assert.Equal(expectedNames, stmt.ParameterNames.ToArray());
+        Assert.Equal(expectedNames, stmt.ParameterNames);
     }
 
     [Fact]
@@ -270,12 +282,12 @@ public class SqlStatementTests
         var orderByClause = Sql.Unsafe("ORDER BY created_at DESC");
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"SELECT * FROM users {orderByClause}";
 
         // Assert
-        Assert.Equal("SELECT * FROM users ORDER BY created_at DESC", stmt.Sql.ToString());
-        Assert.Equal(0, stmt.Parameters.Length);
+        Assert.Equal("SELECT * FROM users ORDER BY created_at DESC", stmt.Sql);
+        Assert.Empty(stmt.Parameters);
     }
 
     [Fact]
@@ -286,12 +298,12 @@ public class SqlStatementTests
         var userId = 42;
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"SELECT * FROM {tableName} WHERE id = {userId}";
 
         // Assert
         object[] expectedParameters = [42];
-        Assert.Equal("SELECT * FROM users WHERE id = $1", stmt.Sql.ToString());
+        Assert.Equal("SELECT * FROM users WHERE id = $1", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -302,11 +314,11 @@ public class SqlStatementTests
         var longRawFragment = Sql.Unsafe(new string('x', 500));
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"{longRawFragment}";
+        SqlStatement<PostgresParameterNamer> stmt = $"{longRawFragment}";
 
         // Assert
-        Assert.Equal(new string('x', 500), stmt.Sql.ToString());
-        Assert.Equal(0, stmt.Parameters.Length);
+        Assert.Equal(new string('x', 500), stmt.Sql);
+        Assert.Empty(stmt.Parameters);
     }
 
     [Fact]
@@ -326,7 +338,7 @@ public class SqlStatementTests
         var namePrefix = "a";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"{activeOnlyCte} SELECT * FROM active_users WHERE created_at >= {minCreatedAt} AND name LIKE {namePrefix}";
 
         // Assert
@@ -338,19 +350,19 @@ public class SqlStatementTests
                   AND deleted_at IS NULL
             ) SELECT * FROM active_users WHERE created_at >= $1 AND name LIKE $2
             """;
-        Assert.Equal(expectedSql, stmt.Sql.ToString());
-        Assert.Equal(2, stmt.Parameters.Length);
+        Assert.Equal(expectedSql, stmt.Sql);
+        Assert.Equal(2, stmt.Parameters.Count);
     }
 
     [Fact]
     public void WhenSameFunctionCallInterpolatedTwice_DoesNotDeduplicate()
     {
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"a={GetValue()} OR b={GetValue()}";
+        SqlStatement<PostgresParameterNamer> stmt = $"a={GetValue()} OR b={GetValue()}";
 
         // Assert
         object[] expectedParameters = [1, 2];
-        Assert.Equal("a=$1 OR b=$2", stmt.Sql.ToString());
+        Assert.Equal("a=$1 OR b=$2", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -367,11 +379,11 @@ public class SqlStatementTests
         SqlFragment where = $"WHERE users.id = {userId}";
 
         // Act
-        using SqlStatement<NameCapturingParameterNamer> stmt = $"SELECT * FROM users {where}";
+        SqlStatement<NameCapturingParameterNamer> stmt = $"SELECT * FROM users {where}";
 
         // Assert
         object[] expectedParameters = [42];
-        Assert.Equal("SELECT * FROM users WHERE users.id = @where_userId", stmt.Sql.ToString());
+        Assert.Equal("SELECT * FROM users WHERE users.id = @where_userId", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -383,11 +395,11 @@ public class SqlStatementTests
         SqlFragment where = $"WHERE users.id = {userId}";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users {where}";
+        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users {where}";
 
         // Assert
         object[] expectedParameters = [42];
-        Assert.Equal("SELECT * FROM users WHERE users.id = $1", stmt.Sql.ToString());
+        Assert.Equal("SELECT * FROM users WHERE users.id = $1", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -400,11 +412,11 @@ public class SqlStatementTests
             $"WHERE owner_id = {userId} OR creator_id = {userId}";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM rows {filter}";
+        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM rows {filter}";
 
         // Assert
         object[] expectedParameters = [42];
-        Assert.Equal("SELECT * FROM rows WHERE owner_id = $1 OR creator_id = $1", stmt.Sql.ToString());
+        Assert.Equal("SELECT * FROM rows WHERE owner_id = $1 OR creator_id = $1", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -418,12 +430,12 @@ public class SqlStatementTests
         SqlFragment second = $"id = {ownerId}";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"SELECT * FROM rows WHERE {first} OR {second}";
 
         // Assert
         object[] expectedParameters = [42, 7];
-        Assert.Equal("SELECT * FROM rows WHERE id = $1 OR id = $2", stmt.Sql.ToString());
+        Assert.Equal("SELECT * FROM rows WHERE id = $1 OR id = $2", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -435,14 +447,14 @@ public class SqlStatementTests
         SqlFragment filter = $"id = {userId}";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"SELECT * FROM rows WHERE {filter} OR exists ({filter})";
 
         // Assert
         object[] expectedParameters = [42];
         Assert.Equal(
             "SELECT * FROM rows WHERE id = $1 OR exists (id = $1)",
-            stmt.Sql.ToString());
+            stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -450,12 +462,12 @@ public class SqlStatementTests
     public void WhenFragmentReturnedFromHelperMethod_DropsPrefixDueToFunctionCallExpression()
     {
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"SELECT * FROM rows WHERE {WhereId(42)} AND {WhereId(99)}";
 
         // Assert
         object[] expectedParameters = [42, 99];
-        Assert.Equal("SELECT * FROM rows WHERE id = $1 AND id = $2", stmt.Sql.ToString());
+        Assert.Equal("SELECT * FROM rows WHERE id = $1 AND id = $2", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -467,14 +479,14 @@ public class SqlStatementTests
     public void WhenSplicingTwoInlineHelperCallsWithInternalDuplication_ProducesFourDistinctSlots()
     {
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"SELECT * FROM rows WHERE {OwnerOrCreatorIs(1)} OR {OwnerOrCreatorIs(2)}";
 
         // Assert
         object[] expectedParameters = [1, 1, 2, 2];
         Assert.Equal(
             "SELECT * FROM rows WHERE owner = $1 OR creator = $2 OR owner = $3 OR creator = $4",
-            stmt.Sql.ToString());
+            stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -486,14 +498,14 @@ public class SqlStatementTests
         var secondFilter = OwnerOrCreatorIs(2);
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"SELECT * FROM rows WHERE {firstFilter} OR {secondFilter}";
 
         // Assert
         object[] expectedParameters = [1, 2];
         Assert.Equal(
             "SELECT * FROM rows WHERE owner = $1 OR creator = $1 OR owner = $2 OR creator = $2",
-            stmt.Sql.ToString());
+            stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -506,11 +518,11 @@ public class SqlStatementTests
         SqlFragment outer = $"WHERE {inner}";
 
         // Act
-        using SqlStatement<NameCapturingParameterNamer> stmt = $"SELECT * FROM rows {outer}";
+        SqlStatement<NameCapturingParameterNamer> stmt = $"SELECT * FROM rows {outer}";
 
         // Assert
         object[] expectedParameters = [42];
-        Assert.Equal("SELECT * FROM rows WHERE id = @outer_inner_userId", stmt.Sql.ToString());
+        Assert.Equal("SELECT * FROM rows WHERE id = @outer_inner_userId", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -524,13 +536,13 @@ public class SqlStatementTests
         SqlFragment filter = $"age >= {minAge} AND status = {status} AND created_at >= {minCreatedAt}";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users WHERE {filter}";
+        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users WHERE {filter}";
 
         // Assert
         Assert.Equal(
             "SELECT * FROM users WHERE age >= $1 AND status = $2 AND created_at >= $3",
-            stmt.Sql.ToString());
-        Assert.Equal(3, stmt.Parameters.Length);
+            stmt.Sql);
+        Assert.Equal(3, stmt.Parameters.Count);
     }
 
     // --- UnsafeSql inside fragments ---
@@ -544,11 +556,11 @@ public class SqlStatementTests
         SqlFragment filter = $"SELECT * FROM {tableName} WHERE id = {userId}";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"{filter}";
+        SqlStatement<PostgresParameterNamer> stmt = $"{filter}";
 
         // Assert
         object[] expectedParameters = [42];
-        Assert.Equal("SELECT * FROM users WHERE id = $1", stmt.Sql.ToString());
+        Assert.Equal("SELECT * FROM users WHERE id = $1", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -560,11 +572,11 @@ public class SqlStatementTests
         SqlFragment fragment = $"{orderBy}";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users {fragment}";
+        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users {fragment}";
 
         // Assert
-        Assert.Equal("SELECT * FROM users ORDER BY created_at DESC", stmt.Sql.ToString());
-        Assert.Equal(0, stmt.Parameters.Length);
+        Assert.Equal("SELECT * FROM users ORDER BY created_at DESC", stmt.Sql);
+        Assert.Empty(stmt.Parameters);
     }
 
     [Fact]
@@ -577,11 +589,11 @@ public class SqlStatementTests
         SqlFragment outer = $"SELECT * FROM {tableName} WHERE {inner}";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"{outer}";
+        SqlStatement<PostgresParameterNamer> stmt = $"{outer}";
 
         // Assert
         object[] expectedParameters = [42];
-        Assert.Equal("SELECT * FROM users WHERE id = $1", stmt.Sql.ToString());
+        Assert.Equal("SELECT * FROM users WHERE id = $1", stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -594,10 +606,10 @@ public class SqlStatementTests
         var empty = "";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE name = {empty}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE name = {empty}";
 
         // Assert
-        Assert.Equal("WHERE name = $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE name = $1", stmt.Sql);
         Assert.Equal("", TypedValue<string>(stmt.Parameters[0]));
     }
 
@@ -608,22 +620,11 @@ public class SqlStatementTests
         byte[] empty = [];
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE data = {empty}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE data = {empty}";
 
         // Assert
-        Assert.Equal("WHERE data = $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE data = $1", stmt.Sql);
         Assert.Empty(TypedValue<byte[]>(stmt.Parameters[0]));
-    }
-
-    [Fact]
-    public void Dispose_WhenCalledTwice_DoesNotThrow()
-    {
-        // Arrange
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT {42}";
-
-        // Act
-        stmt.Dispose();
-        stmt.Dispose();
     }
 
     [Fact]
@@ -633,11 +634,11 @@ public class SqlStatementTests
         var empty = Sql.Unsafe("");
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"SELECT 1{empty}";
+        SqlStatement<PostgresParameterNamer> stmt = $"SELECT 1{empty}";
 
         // Assert
-        Assert.Equal("SELECT 1", stmt.Sql.ToString());
-        Assert.Equal(0, stmt.Parameters.Length);
+        Assert.Equal("SELECT 1", stmt.Sql);
+        Assert.Empty(stmt.Parameters);
     }
 
     [Fact]
@@ -649,14 +650,14 @@ public class SqlStatementTests
         SqlFragment statusFilter = $"status = {"shipped"}";
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt =
+        SqlStatement<PostgresParameterNamer> stmt =
             $"SELECT * FROM {tableName} WHERE amount > {minAmount} AND {statusFilter}";
 
         // Assert
         object[] expectedParameters = [100m, "shipped"];
         Assert.Equal(
             "SELECT * FROM orders WHERE amount > $1 AND status = $2",
-            stmt.Sql.ToString());
+            stmt.Sql);
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
@@ -669,10 +670,10 @@ public class SqlStatementTests
         var duration = TimeSpan.FromHours(36);
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE elapsed > {duration}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE elapsed > {duration}";
 
         // Assert
-        Assert.Equal("WHERE elapsed > $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE elapsed > $1", stmt.Sql);
         Assert.Equal(TimeSpan.FromHours(36), TypedValue<TimeSpan>(stmt.Parameters[0]));
     }
 
@@ -683,10 +684,10 @@ public class SqlStatementTests
         var ip = IPAddress.Parse("192.168.1.1");
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE client_ip = {ip}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE client_ip = {ip}";
 
         // Assert
-        Assert.Equal("WHERE client_ip = $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE client_ip = $1", stmt.Sql);
         Assert.Equal(ip, TypedValue<IPAddress>(stmt.Parameters[0]));
     }
 
@@ -697,10 +698,10 @@ public class SqlStatementTests
         var mac = PhysicalAddress.Parse("00-11-22-33-44-55");
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE mac_addr = {mac}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE mac_addr = {mac}";
 
         // Assert
-        Assert.Equal("WHERE mac_addr = $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE mac_addr = $1", stmt.Sql);
         Assert.Equal(mac, TypedValue<PhysicalAddress>(stmt.Parameters[0]));
     }
 
@@ -711,10 +712,10 @@ public class SqlStatementTests
         var big = BigInteger.Parse("99999999999999999999");
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE amount = {big}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE amount = {big}";
 
         // Assert
-        Assert.Equal("WHERE amount = $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE amount = $1", stmt.Sql);
         Assert.Equal(big, TypedValue<BigInteger>(stmt.Parameters[0]));
     }
 
@@ -725,10 +726,10 @@ public class SqlStatementTests
         var letter = 'A';
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE grade = {letter}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE grade = {letter}";
 
         // Assert
-        Assert.Equal("WHERE grade = $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE grade = $1", stmt.Sql);
         Assert.Equal('A', TypedValue<char>(stmt.Parameters[0]));
     }
 
@@ -739,10 +740,10 @@ public class SqlStatementTests
         var bits = new BitArray([true, false, true]);
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE flags = {bits}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE flags = {bits}";
 
         // Assert
-        Assert.Equal("WHERE flags = $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE flags = $1", stmt.Sql);
         Assert.Same(bits, TypedValue<BitArray>(stmt.Parameters[0]));
     }
 
@@ -755,10 +756,10 @@ public class SqlStatementTests
         int? userId = 42;
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE id = {userId}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE id = {userId}";
 
         // Assert
-        Assert.Equal("WHERE id = $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE id = $1", stmt.Sql);
         Assert.Equal(42, stmt.Parameters[0].Value);
     }
 
@@ -769,10 +770,10 @@ public class SqlStatementTests
         int? userId = null;
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE id = {userId}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE id = {userId}";
 
         // Assert
-        Assert.Equal("WHERE id = $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE id = $1", stmt.Sql);
         Assert.Equal(DBNull.Value, stmt.Parameters[0].Value);
     }
 
@@ -783,10 +784,10 @@ public class SqlStatementTests
         TimeSpan? duration = null;
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE elapsed > {duration}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE elapsed > {duration}";
 
         // Assert
-        Assert.Equal("WHERE elapsed > $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE elapsed > $1", stmt.Sql);
         Assert.Equal(DBNull.Value, stmt.Parameters[0].Value);
     }
 
@@ -799,11 +800,11 @@ public class SqlStatementTests
         var ids = new[] { 1, 2, 3 };
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE id = ANY({ids})";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE id = ANY({ids})";
 
         // Assert
         int[] expectedParameters = [1, 2, 3];
-        Assert.Equal("WHERE id = ANY($1)", stmt.Sql.ToString());
+        Assert.Equal("WHERE id = ANY($1)", stmt.Sql);
         Assert.Equal(expectedParameters, TypedValue<int[]>(stmt.Parameters[0]));
     }
 
@@ -814,11 +815,11 @@ public class SqlStatementTests
         IReadOnlyList<string> tags = new List<string> { "a", "b", "c" };
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE tags @> {tags}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE tags @> {tags}";
 
         // Assert
         string[] expectedParameters = ["a", "b", "c"];
-        Assert.Equal("WHERE tags @> $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE tags @> $1", stmt.Sql);
         Assert.Equal(expectedParameters, TypedValue<string[]>(stmt.Parameters[0]));
     }
 
@@ -829,10 +830,10 @@ public class SqlStatementTests
         IReadOnlyList<IPAddress> ips = new[] { IPAddress.Loopback, IPAddress.IPv6Loopback };
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE ip = ANY({ips})";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE ip = ANY({ips})";
 
         // Assert
-        Assert.Equal("WHERE ip = ANY($1)", stmt.Sql.ToString());
+        Assert.Equal("WHERE ip = ANY($1)", stmt.Sql);
         var captured = TypedValue<IPAddress[]>(stmt.Parameters[0]);
         Assert.Equal(2, captured.Length);
         Assert.Equal(IPAddress.Loopback, captured[0]);
@@ -847,10 +848,10 @@ public class SqlStatementTests
         var point = new NpgsqlPoint(1.5, 2.5);
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE location = {point}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE location = {point}";
 
         // Assert
-        Assert.Equal("WHERE location = $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE location = $1", stmt.Sql);
         Assert.Equal(point, TypedValue<NpgsqlPoint>(stmt.Parameters[0]));
     }
 
@@ -861,10 +862,10 @@ public class SqlStatementTests
         var range = new NpgsqlRange<int>(1, 10);
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE val <@ {range}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE val <@ {range}";
 
         // Assert
-        Assert.Equal("WHERE val <@ $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE val <@ $1", stmt.Sql);
         Assert.Equal(range, TypedValue<NpgsqlRange<int>>(stmt.Parameters[0]));
     }
 
@@ -877,10 +878,10 @@ public class SqlStatementTests
         var range = new NpgsqlRange<DateOnly>(checkIn, checkOut);
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE stay && {range}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE stay && {range}";
 
         // Assert
-        Assert.Equal("WHERE stay && $1", stmt.Sql.ToString());
+        Assert.Equal("WHERE stay && $1", stmt.Sql);
         Assert.Equal(range, TypedValue<NpgsqlRange<DateOnly>>(stmt.Parameters[0]));
     }
 
@@ -891,19 +892,19 @@ public class SqlStatementTests
         var point = new NpgsqlPoint(1, 2);
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE a = {point} OR b = {point}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE a = {point} OR b = {point}";
 
         // Assert
-        Assert.Equal("WHERE a = $1 OR b = $1", stmt.Sql.ToString());
-        Assert.Equal(1, stmt.Parameters.Length);
+        Assert.Equal("WHERE a = $1 OR b = $1", stmt.Sql);
+        Assert.Equal(1, stmt.Parameters.Count);
     }
 
-    // --- Buffer growth stress tests ---
+    // --- Large-scale composition stress tests ---
 
     [Fact]
     public void WhenNestingFragmentsDeeplyWithAccumulatingParameters_HandlesHundredsOfParameters()
     {
-        // Arrange — build a chain where each level adds one parameter on top of the previous fragment
+        // Arrange
         // Level 0: "p0 = $1"
         // Level 1: "p0 = $1 AND p1 = $2"
         // ...
@@ -914,49 +915,51 @@ public class SqlStatementTests
         {
             var columnName = Sql.Unsafe($"p{i}");
             var next = i;
-            current = $"{current} AND {columnName} = {next}";
+            var previous = current;
+            current = $"{previous} AND {columnName} = {next}";
         }
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"WHERE {current}";
+        SqlStatement<PostgresParameterNamer> stmt = $"WHERE {current}";
 
         // Assert
-        Assert.Equal(depth, stmt.Parameters.Length);
+        Assert.Equal(depth, stmt.Parameters.Count);
         for (var i = 0; i < depth; i++)
         {
             Assert.Equal(i, stmt.Parameters[i].Value);
         }
-        Assert.Contains("$1", stmt.Sql.ToString());
-        Assert.Contains("$200", stmt.Sql.ToString());
+        Assert.Contains("$1", stmt.Sql);
+        Assert.Contains("$200", stmt.Sql);
     }
 
     [Fact]
     public void WhenNestingFragmentsDeeply_SqlLiteralTextIsPreservedAcrossAllLevels()
     {
-        // Arrange — 100 levels of nesting, each adding a literal keyword
+        // Arrange
         const int depth = 100;
         SqlFragment current = $"{Sql.Unsafe("col0")} = {0}";
         for (var i = 1; i < depth; i++)
         {
             var columnName = Sql.Unsafe($"col{i}");
             var next = i;
-            current = $"{current} OR {columnName} = {next}";
+            var previous = current;
+            current = $"{previous} OR {columnName} = {next}";
         }
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM t WHERE {current}";
+        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM t WHERE {current}";
 
         // Assert
-        var sql = stmt.Sql.ToString();
+        var sql = stmt.Sql;
         Assert.StartsWith("SELECT * FROM t WHERE col0 = $1", sql);
         Assert.Contains($"col99 = ${depth}", sql);
-        Assert.Equal(depth, stmt.Parameters.Length);
+        Assert.Equal(depth, stmt.Parameters.Count);
     }
 
     [Fact]
     public void WhenNestingFragmentsWithMultipleParametersPerLevel_GrowsBuffersCorrectly()
     {
-        // Arrange — 50 levels of nesting, each adding 4 new parameters
+        // Arrange
         const int depth = 50;
         var a = 0;
         var b = 1;
@@ -969,14 +972,15 @@ public class SqlStatementTests
             b = i * 4 + 1;
             c = i * 4 + 2;
             d = i * 4 + 3;
-            current = $"{current},({a},{b},{c},{d})";
+            var previous = current;
+            current = $"{previous},({a},{b},{c},{d})";
         }
 
         // Act
-        using SqlStatement<PostgresParameterNamer> stmt = $"SELECT {current}";
+        SqlStatement<PostgresParameterNamer> stmt = $"SELECT {current}";
 
         // Assert
-        Assert.Equal(depth * 4, stmt.Parameters.Length);
+        Assert.Equal(depth * 4, stmt.Parameters.Count);
         Assert.Equal(0, stmt.Parameters[0].Value);
         Assert.Equal(199, stmt.Parameters[^1].Value);
     }

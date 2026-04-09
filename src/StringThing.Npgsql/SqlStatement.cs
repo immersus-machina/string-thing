@@ -1,44 +1,34 @@
-using System.Buffers;
 using System.Collections;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Npgsql;
 using NpgsqlTypes;
 
 namespace StringThing.Npgsql;
 
 [InterpolatedStringHandler]
-public ref struct SqlStatement<TNamer> where TNamer : IParameterNamer
+public class SqlStatement<TNamer> where TNamer : IParameterNamer
 {
     private const int MaxCharsPerPlaceholder = 32;
 
-    private char[] _sqlBuffer;
-    private NpgsqlParameter[] _parameterBuffer;
-    private string?[] _parameterNames;
-    private int _sqlPosition;
-    private int _parameterCount;
+    private readonly StringBuilder _sql;
+    private readonly List<NpgsqlParameter> _parameters;
+    private readonly List<string?> _parameterNames;
 
     public SqlStatement(int literalLength, int formattedCount)
     {
-        var initialSqlBufferSize = literalLength + (formattedCount * MaxCharsPerPlaceholder);
-        _sqlBuffer = ArrayPool<char>.Shared.Rent(initialSqlBufferSize);
-        _parameterBuffer = formattedCount > 0
-            ? ArrayPool<NpgsqlParameter>.Shared.Rent(formattedCount)
-            : [];
-        _parameterNames = formattedCount > 0
-            ? ArrayPool<string?>.Shared.Rent(formattedCount)
-            : [];
-        _sqlPosition = 0;
-        _parameterCount = 0;
+        _sql = new StringBuilder(literalLength + (formattedCount * MaxCharsPerPlaceholder));
+        _parameters = new List<NpgsqlParameter>(formattedCount);
+        _parameterNames = new List<string?>(formattedCount);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendLiteral(string literalText)
     {
-        literalText.AsSpan().CopyTo(_sqlBuffer.AsSpan(_sqlPosition));
-        _sqlPosition += literalText.Length;
+        _sql.Append(literalText);
     }
 
     // --- Null helpers ---
@@ -505,40 +495,21 @@ public ref struct SqlStatement<TNamer> where TNamer : IParameterNamer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendFormatted(UnsafeSql rawSqlFragment)
     {
-        var rawLength = rawSqlFragment.RawText.Length;
-        if (rawLength > MaxCharsPerPlaceholder)
-        {
-            GrowSqlBufferBy(rawLength - MaxCharsPerPlaceholder);
-        }
-        rawSqlFragment.RawText.AsSpan().CopyTo(_sqlBuffer.AsSpan(_sqlPosition));
-        _sqlPosition += rawLength;
+        _sql.Append(rawSqlFragment.RawText);
     }
 
     public void AppendFormatted(SqlFragment fragment,
         [CallerArgumentExpression(nameof(fragment))] string? expression = null)
     {
-        var fragmentSpaceNeeded =
-            fragment.TotalLiteralChars + (fragment.ParameterCount * MaxCharsPerPlaceholder);
-        if (fragmentSpaceNeeded > MaxCharsPerPlaceholder)
-        {
-            GrowSqlBufferBy(fragmentSpaceNeeded - MaxCharsPerPlaceholder);
-        }
-
-        if (fragment.ParameterCount > 1)
-        {
-            GrowParameterBuffers(fragment.ParameterCount - 1);
-        }
-
         var prefix = SqlFragment.ResolveNamePrefix(expression);
         var allowCrossContextDedup = prefix is not null;
         var elements = fragment.Elements;
-        for (var i = 0; i < elements.Length; i++)
+        for (var i = 0; i < elements.Count; i++)
         {
             var element = elements[i];
             if (element.TryGetLiteral(out var literalText))
             {
-                literalText.AsSpan().CopyTo(_sqlBuffer.AsSpan(_sqlPosition));
-                _sqlPosition += literalText.Length;
+                _sql.Append(literalText);
             }
             else if (element.TryGetParameter(out var parameter, out var nestedExpression))
             {
@@ -550,89 +521,39 @@ public ref struct SqlStatement<TNamer> where TNamer : IParameterNamer
 
     // --- Internal machinery ---
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void AppendParameter(NpgsqlParameter parameter, string? expression, bool allowDeduplication = true)
     {
         var slotIndex = FindOrAddSlot(parameter, expression, allowDeduplication);
 
+        Span<char> placeholderBuffer = stackalloc char[MaxCharsPerPlaceholder];
         TNamer.WritePlaceholder(
             slotIndex,
             (expression ?? string.Empty).AsSpan(),
-            _sqlBuffer.AsSpan(_sqlPosition),
+            placeholderBuffer,
             MaxCharsPerPlaceholder,
             out var charactersWritten);
-        _sqlPosition += charactersWritten;
+        _sql.Append(placeholderBuffer[..charactersWritten]);
     }
 
     private int FindOrAddSlot(NpgsqlParameter parameter, string? expression, bool allowDeduplication)
     {
         if (allowDeduplication && expression is not null && !expression.Contains('('))
         {
-            for (var existingIndex = 0; existingIndex < _parameterCount; existingIndex++)
+            for (var existingIndex = 0; existingIndex < _parameterNames.Count; existingIndex++)
             {
                 if (string.Equals(_parameterNames[existingIndex], expression, StringComparison.Ordinal))
                     return existingIndex;
             }
         }
 
-        var newIndex = _parameterCount;
-        _parameterBuffer[newIndex] = parameter;
-        _parameterNames[newIndex] = expression;
-        _parameterCount++;
-        return newIndex;
+        _parameters.Add(parameter);
+        _parameterNames.Add(expression);
+        return _parameters.Count - 1;
     }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void GrowSqlBufferBy(int surplusCharsNeeded)
-    {
-        var newBuffer = ArrayPool<char>.Shared.Rent(_sqlBuffer.Length + surplusCharsNeeded);
-        _sqlBuffer.AsSpan(0, _sqlPosition).CopyTo(newBuffer);
-        var oldBuffer = _sqlBuffer;
-        _sqlBuffer = newBuffer;
-        ArrayPool<char>.Shared.Return(oldBuffer);
-    }
+    internal string Sql => _sql.ToString();
 
-    private void GrowParameterBuffers(int additionalSlotsNeeded)
-    {
-        var newCapacity = _parameterBuffer.Length + additionalSlotsNeeded;
+    internal IReadOnlyList<NpgsqlParameter> Parameters => _parameters;
 
-        var newParameterBuffer = ArrayPool<NpgsqlParameter>.Shared.Rent(newCapacity);
-        _parameterBuffer.AsSpan(0, _parameterCount).CopyTo(newParameterBuffer);
-        var oldParameterBuffer = _parameterBuffer;
-        _parameterBuffer = newParameterBuffer;
-        if (oldParameterBuffer.Length > 0)
-            ArrayPool<NpgsqlParameter>.Shared.Return(oldParameterBuffer, clearArray: true);
-
-        var newParameterNames = ArrayPool<string?>.Shared.Rent(newCapacity);
-        _parameterNames.AsSpan(0, _parameterCount).CopyTo(newParameterNames);
-        var oldParameterNames = _parameterNames;
-        _parameterNames = newParameterNames;
-        if (oldParameterNames.Length > 0)
-            ArrayPool<string?>.Shared.Return(oldParameterNames, clearArray: true);
-    }
-
-    internal readonly ReadOnlySpan<char> Sql => _sqlBuffer.AsSpan(0, _sqlPosition);
-
-    internal readonly ReadOnlySpan<NpgsqlParameter> Parameters => _parameterBuffer.AsSpan(0, _parameterCount);
-
-    internal readonly ReadOnlySpan<string?> ParameterNames => _parameterNames.AsSpan(0, _parameterCount);
-
-    public void Dispose()
-    {
-        if (_sqlBuffer is { Length: > 0 })
-        {
-            ArrayPool<char>.Shared.Return(_sqlBuffer);
-            _sqlBuffer = [];
-        }
-        if (_parameterBuffer is { Length: > 0 })
-        {
-            ArrayPool<NpgsqlParameter>.Shared.Return(_parameterBuffer, clearArray: true);
-            _parameterBuffer = [];
-        }
-        if (_parameterNames is { Length: > 0 })
-        {
-            ArrayPool<string?>.Shared.Return(_parameterNames, clearArray: true);
-            _parameterNames = [];
-        }
-    }
+    internal IReadOnlyList<string?> ParameterNames => _parameterNames;
 }

@@ -1,4 +1,3 @@
-using System.Buffers;
 using System.Collections;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -9,21 +8,20 @@ using NpgsqlTypes;
 
 namespace StringThing.Npgsql;
 
+/// <summary>
+/// A composable SQL fragment that captures parameters for splicing into a <see cref="SqlStatement{TNamer}"/>.
+/// The creator is responsible for disposing the fragment; splicing into a statement does not transfer ownership.
+/// </summary>
 [InterpolatedStringHandler]
-public ref struct SqlFragment
+public sealed class SqlFragment
 {
-    private SqlElement[] _elements;
-    private int _elementCount;
+    private readonly List<SqlElement> _elements;
     private int _totalLiteralChars;
     private int _parameterCount;
 
     public SqlFragment(int literalLength, int formattedCount)
     {
-        var initialCapacity = (formattedCount * 2) + 1;
-        _elements = initialCapacity > 0
-            ? ArrayPool<SqlElement>.Shared.Rent(initialCapacity)
-            : [];
-        _elementCount = 0;
+        _elements = new List<SqlElement>((formattedCount * 2) + 1);
         _totalLiteralChars = 0;
         _parameterCount = 0;
     }
@@ -31,7 +29,7 @@ public ref struct SqlFragment
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendLiteral(string literalText)
     {
-        _elements[_elementCount++] = SqlElement.Literal(literalText);
+        _elements.Add(SqlElement.Literal(literalText));
         _totalLiteralChars += literalText.Length;
     }
 
@@ -499,7 +497,7 @@ public ref struct SqlFragment
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendFormatted(UnsafeSql rawSqlFragment)
     {
-        _elements[_elementCount++] = SqlElement.Literal(rawSqlFragment.RawText);
+        _elements.Add(SqlElement.Literal(rawSqlFragment.RawText));
         _totalLiteralChars += rawSqlFragment.RawText.Length;
     }
 
@@ -507,22 +505,19 @@ public ref struct SqlFragment
         [CallerArgumentExpression(nameof(nestedFragment))] string? expression = null)
     {
         var nestedElements = nestedFragment.Elements;
-        if (nestedElements.Length > 1)
-            GrowElements(nestedElements.Length - 1);
-
         var prefix = ResolveNamePrefix(expression);
-        for (var i = 0; i < nestedElements.Length; i++)
+        for (var i = 0; i < nestedElements.Count; i++)
         {
             var element = nestedElements[i];
             if (element.TryGetLiteral(out var literalText))
             {
-                _elements[_elementCount++] = element;
+                _elements.Add(element);
                 _totalLiteralChars += literalText.Length;
             }
             else if (element.TryGetParameter(out var parameter, out var nestedExpression))
             {
                 var combinedName = CombineNames(prefix, nestedExpression);
-                _elements[_elementCount++] = SqlElement.Param(parameter, combinedName);
+                _elements.Add(SqlElement.Param(parameter, combinedName));
                 _parameterCount++;
             }
         }
@@ -533,19 +528,8 @@ public ref struct SqlFragment
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RecordParameter(NpgsqlParameter parameter, string? capturedExpression)
     {
-        _elements[_elementCount++] = SqlElement.Param(parameter, capturedExpression);
+        _elements.Add(SqlElement.Param(parameter, capturedExpression));
         _parameterCount++;
-    }
-
-    private void GrowElements(int additionalElements)
-    {
-        var newCapacity = _elements.Length + additionalElements;
-        var newBuffer = ArrayPool<SqlElement>.Shared.Rent(newCapacity);
-        _elements.AsSpan(0, _elementCount).CopyTo(newBuffer);
-        var oldBuffer = _elements;
-        _elements = newBuffer;
-        if (oldBuffer.Length > 0)
-            ArrayPool<SqlElement>.Shared.Return(oldBuffer, clearArray: true);
     }
 
     internal static string? ResolveNamePrefix(string? capturedExpression)
@@ -562,19 +546,10 @@ public ref struct SqlFragment
     {
         if (prefix is null || innerName is null)
             return null;
-        return prefix + "." + innerName;
+        return $"{prefix}.{innerName}";
     }
 
-    internal readonly ReadOnlySpan<SqlElement> Elements => _elements.AsSpan(0, _elementCount);
-    internal readonly int TotalLiteralChars => _totalLiteralChars;
-    internal readonly int ParameterCount => _parameterCount;
-
-    public void Dispose()
-    {
-        if (_elements is { Length: > 0 })
-        {
-            ArrayPool<SqlElement>.Shared.Return(_elements, clearArray: true);
-            _elements = [];
-        }
-    }
+    internal IReadOnlyList<SqlElement> Elements => _elements;
+    internal int TotalLiteralChars => _totalLiteralChars;
+    internal int ParameterCount => _parameterCount;
 }
