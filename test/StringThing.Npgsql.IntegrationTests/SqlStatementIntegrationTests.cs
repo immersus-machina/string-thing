@@ -6,18 +6,30 @@ public class SqlStatementIntegrationTests(PostgresFixture postgres) : IClassFixt
 {
     private static CancellationToken CancellationToken => TestContext.Current.CancellationToken;
 
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
     public async ValueTask InitializeAsync()
     {
-        await using var command = postgres.DataSource.CreateCommand("""
+        await using var createUsers = postgres.DataSource.CreateCommand("""
             CREATE TABLE IF NOT EXISTS users (
                 id integer PRIMARY KEY,
                 name text NOT NULL,
                 email text,
                 tags text[] NOT NULL DEFAULT '{}',
                 created_at timestamptz NOT NULL DEFAULT now()
-            )
+            );
+            CREATE TABLE IF NOT EXISTS pgrow_test (
+                id integer PRIMARY KEY,
+                name text NOT NULL,
+                email text
+            );
+            CREATE TABLE IF NOT EXISTS pgrow_single_test (
+                id integer PRIMARY KEY,
+                name text NOT NULL,
+                email text
+            );
             """);
-        await command.ExecuteNonQueryAsync(CancellationToken);
+        await createUsers.ExecuteNonQueryAsync(CancellationToken);
 
         await using var insert = postgres.DataSource.CreateCommand("""
             INSERT INTO users (id, name, email, tags, created_at) VALUES
@@ -28,8 +40,6 @@ public class SqlStatementIntegrationTests(PostgresFixture postgres) : IClassFixt
             """);
         await insert.ExecuteNonQueryAsync(CancellationToken);
     }
-
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task WhenQueryingWithScalarParameter_ReturnsMatchingRow()
@@ -165,5 +175,56 @@ public class SqlStatementIntegrationTests(PostgresFixture postgres) : IClassFixt
 
         // Assert
         Assert.Equal("bob", result);
+    }
+
+    // --- Multi insert with IPostgresRow ---
+
+    private record InsertUser(int Id, string Name, string? Email) : IPostgresRow
+    {
+        public SqlFragment RowValues => $"({Id}, {Name}, {Email})";
+    }
+
+    [Fact]
+    public async Task WhenInsertingMultipleRowsWithIPostgresRow_InsertsAllRows()
+    {
+        // Arrange
+        InsertUser[] users =
+        [
+            new(1, "alice", "alice@example.com"),
+            new(2, "bob", null),
+            new(3, "carol", "carol@example.com"),
+        ];
+
+        // Act
+        PostgresSql stmt = $"INSERT INTO pgrow_test (id, name, email) VALUES {PostgresSql.InsertRows(users)}";
+        await using var command = stmt.ToCommand(postgres.DataSource);
+        await command.ExecuteNonQueryAsync(CancellationToken);
+
+        // Assert
+        await using var verify = postgres.DataSource.CreateCommand("SELECT name, email FROM pgrow_test ORDER BY id");
+        var results = new List<(string Name, string? Email)>();
+        await using var reader = await verify.ExecuteReaderAsync(CancellationToken);
+        while (await reader.ReadAsync(CancellationToken))
+            results.Add((reader.GetString(0), reader.IsDBNull(1) ? null : reader.GetString(1)));
+        Assert.Equal(
+            [("alice", "alice@example.com"), ("bob", null), ("carol", "carol@example.com")],
+            results);
+    }
+
+    [Fact]
+    public async Task WhenInsertingSingleRowWithIPostgresRow_Works()
+    {
+        // Arrange
+        InsertUser[] users = [new(1, "alice", null)];
+
+        // Act
+        PostgresSql stmt = $"INSERT INTO pgrow_single_test (id, name, email) VALUES {PostgresSql.InsertRows(users)}";
+        await using var command = stmt.ToCommand(postgres.DataSource);
+        await command.ExecuteNonQueryAsync(CancellationToken);
+
+        // Assert
+        await using var verify = postgres.DataSource.CreateCommand("SELECT name FROM pgrow_single_test");
+        var result = await verify.ExecuteScalarAsync(CancellationToken);
+        Assert.Equal("alice", result);
     }
 }

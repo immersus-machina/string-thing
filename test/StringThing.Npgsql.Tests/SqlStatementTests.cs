@@ -896,7 +896,7 @@ public class SqlStatementTests
 
         // Assert
         Assert.Equal("WHERE a = $1 OR b = $1", stmt.Sql);
-        Assert.Equal(1, stmt.Parameters.Count);
+        Assert.Single(stmt.Parameters);
     }
 
     // --- Large-scale composition stress tests ---
@@ -983,5 +983,52 @@ public class SqlStatementTests
         Assert.Equal(depth * 4, stmt.Parameters.Count);
         Assert.Equal(0, stmt.Parameters[0].Value);
         Assert.Equal(199, stmt.Parameters[^1].Value);
+    }
+
+    // --- InsertRows ---
+
+    private record TestRow(int Id, string Name) : IPostgresRow
+    {
+        public SqlFragment RowValues => $"({Id}, {Name})";
+    }
+
+    [Fact]
+    public void InsertRows_WhenMultipleRows_ComposesCommaSeparatedValueFragments()
+    {
+        // Arrange
+        TestRow[] rows = [new(1, "alice"), new(2, "bob"), new(3, "carol")];
+
+        // Act
+        PostgresSql stmt = $"INSERT INTO t (id, name) VALUES {PostgresSql.InsertRows(rows)}";
+
+        // Assert
+        Assert.Equal("INSERT INTO t (id, name) VALUES ($1, $2), ($3, $4), ($5, $6)", stmt.Sql);
+        object[] expectedParameters = [1, "alice", 2, "bob", 3, "carol"];
+        Assert.Equal(expectedParameters, Values(stmt.Parameters));
+    }
+
+    [Fact]
+    public void InsertRows_WhenSingleRow_ProducesSingleValueGroup()
+    {
+        // Arrange
+        TestRow[] rows = [new(1, "alice")];
+
+        // Act
+        PostgresSql stmt = $"INSERT INTO t (id, name) VALUES {PostgresSql.InsertRows(rows)}";
+
+        // Assert
+        Assert.Equal("INSERT INTO t (id, name) VALUES ($1, $2)", stmt.Sql);
+        object[] expectedParameters = [1, "alice"];
+        Assert.Equal(expectedParameters, Values(stmt.Parameters));
+    }
+
+    [Fact]
+    public void InsertRows_WhenEmptyList_Throws()
+    {
+        // Arrange
+        TestRow[] rows = [];
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => PostgresSql.InsertRows(rows));
     }
 }
