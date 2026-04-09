@@ -406,7 +406,7 @@ public readonly record struct PostgresValue : IUnion
         _referenceSlot = value;
     }
 
-    public PostgresValue(string[] value)
+    public PostgresValue(string?[] value)
     {
         _tag = Tag.StringArray;
         _valueSlot = default;
@@ -1006,182 +1006,332 @@ public readonly record struct PostgresValue : IUnion
 
     public bool TryGetValue(out bool[] value)
     {
-        if (_tag == Tag.BooleanArray) { value = (bool[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.BooleanArray)
+        {
+            value = (bool[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out short[] value)
     {
-        if (_tag == Tag.Int16Array) { value = (short[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.Int16Array)
+        {
+            value = (short[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out int[] value)
     {
-        if (_tag == Tag.Int32Array) { value = (int[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.Int32Array)
+        {
+            value = (int[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out long[] value)
     {
-        if (_tag == Tag.Int64Array) { value = (long[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.Int64Array)
+        {
+            value = (long[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out float[] value)
     {
-        if (_tag == Tag.SingleArray) { value = (float[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.SingleArray)
+        {
+            value = (float[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out double[] value)
     {
-        if (_tag == Tag.DoubleArray) { value = (double[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.DoubleArray)
+        {
+            value = (double[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out decimal[] value)
     {
-        if (_tag == Tag.DecimalArray) { value = (decimal[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.DecimalArray)
+        {
+            value = (decimal[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
-    public bool TryGetValue(out string[] value)
+    public bool TryGetValue(out string?[] value)
     {
-        if (_tag == Tag.StringArray) { value = (string[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.StringArray)
+        {
+            value = (string?[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out Guid[] value)
     {
-        if (_tag == Tag.GuidArray) { value = (Guid[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.GuidArray)
+        {
+            value = (Guid[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out DateTime[] value)
     {
-        if (_tag == Tag.DateTimeArray) { value = (DateTime[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.DateTimeArray)
+        {
+            value = (DateTime[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out DateTimeOffset[] value)
     {
-        if (_tag == Tag.DateTimeOffsetArray) { value = (DateTimeOffset[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.DateTimeOffsetArray)
+        {
+            value = (DateTimeOffset[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out DateOnly[] value)
     {
-        if (_tag == Tag.DateOnlyArray) { value = (DateOnly[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.DateOnlyArray)
+        {
+            value = (DateOnly[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out TimeOnly[] value)
     {
-        if (_tag == Tag.TimeOnlyArray) { value = (TimeOnly[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.TimeOnlyArray)
+        {
+            value = (TimeOnly[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out TimeSpan[] value)
     {
-        if (_tag == Tag.TimeSpanArray) { value = (TimeSpan[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.TimeSpanArray)
+        {
+            value = (TimeSpan[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out IPAddress[] value)
     {
-        if (_tag == Tag.IPAddressArray) { value = (IPAddress[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.IPAddressArray)
+        {
+            value = (IPAddress[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlInterval[] value)
     {
-        if (_tag == Tag.NpgsqlIntervalArray) { value = (NpgsqlInterval[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlIntervalArray)
+        {
+            value = (NpgsqlInterval[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlPoint[] value)
     {
-        if (_tag == Tag.NpgsqlPointArray) { value = (NpgsqlPoint[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlPointArray)
+        {
+            value = (NpgsqlPoint[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out PhysicalAddress[] value)
     {
-        if (_tag == Tag.PhysicalAddressArray) { value = (PhysicalAddress[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.PhysicalAddressArray)
+        {
+            value = (PhysicalAddress[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlInet[] value)
     {
-        if (_tag == Tag.NpgsqlInetArray) { value = (NpgsqlInet[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlInetArray)
+        {
+            value = (NpgsqlInet[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlCidr[] value)
     {
-        if (_tag == Tag.NpgsqlCidrArray) { value = (NpgsqlCidr[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlCidrArray)
+        {
+            value = (NpgsqlCidr[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlBox[] value)
     {
-        if (_tag == Tag.NpgsqlBoxArray) { value = (NpgsqlBox[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlBoxArray)
+        {
+            value = (NpgsqlBox[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlLSeg[] value)
     {
-        if (_tag == Tag.NpgsqlLSegArray) { value = (NpgsqlLSeg[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlLSegArray)
+        {
+            value = (NpgsqlLSeg[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlCircle[] value)
     {
-        if (_tag == Tag.NpgsqlCircleArray) { value = (NpgsqlCircle[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlCircleArray)
+        {
+            value = (NpgsqlCircle[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlLine[] value)
     {
-        if (_tag == Tag.NpgsqlLineArray) { value = (NpgsqlLine[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlLineArray)
+        {
+            value = (NpgsqlLine[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlPath[] value)
     {
-        if (_tag == Tag.NpgsqlPathArray) { value = (NpgsqlPath[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlPathArray)
+        {
+            value = (NpgsqlPath[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlPolygon[] value)
     {
-        if (_tag == Tag.NpgsqlPolygonArray) { value = (NpgsqlPolygon[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlPolygonArray)
+        {
+            value = (NpgsqlPolygon[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlTsVector[] value)
     {
-        if (_tag == Tag.NpgsqlTsVectorArray) { value = (NpgsqlTsVector[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlTsVectorArray)
+        {
+            value = (NpgsqlTsVector[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out NpgsqlTsQuery[] value)
     {
-        if (_tag == Tag.NpgsqlTsQueryArray) { value = (NpgsqlTsQuery[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.NpgsqlTsQueryArray)
+        {
+            value = (NpgsqlTsQuery[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out BigInteger[] value)
     {
-        if (_tag == Tag.BigIntegerArray) { value = (BigInteger[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.BigIntegerArray)
+        {
+            value = (BigInteger[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public bool TryGetValue(out char[] value)
     {
-        if (_tag == Tag.CharArray) { value = (char[])_referenceSlot!; return true; }
-        value = default!; return false;
+        if (_tag == Tag.CharArray)
+        {
+            value = (char[])_referenceSlot!;
+            return true;
+        }
+        value = default!;
+        return false;
     }
 
     public object? Value => _tag switch
@@ -1252,7 +1402,7 @@ public readonly record struct PostgresValue : IUnion
         Tag.SingleArray => new NpgsqlParameter<float[]>("", (float[])_referenceSlot!),
         Tag.DoubleArray => new NpgsqlParameter<double[]>("", (double[])_referenceSlot!),
         Tag.DecimalArray => new NpgsqlParameter<decimal[]>("", (decimal[])_referenceSlot!),
-        Tag.StringArray => new NpgsqlParameter<string[]>("", (string[])_referenceSlot!),
+        Tag.StringArray => new NpgsqlParameter<string?[]>("", (string?[])_referenceSlot!),
         Tag.GuidArray => new NpgsqlParameter<Guid[]>("", (Guid[])_referenceSlot!),
         Tag.DateTimeArray => new NpgsqlParameter<DateTime[]>("", (DateTime[])_referenceSlot!),
         Tag.DateTimeOffsetArray => new NpgsqlParameter<DateTimeOffset[]>("", (DateTimeOffset[])_referenceSlot!),
@@ -1275,8 +1425,8 @@ public readonly record struct PostgresValue : IUnion
         Tag.NpgsqlTsQueryArray => new NpgsqlParameter<NpgsqlTsQuery[]>("", (NpgsqlTsQuery[])_referenceSlot!),
         Tag.BigIntegerArray => new NpgsqlParameter<BigInteger[]>("", (BigInteger[])_referenceSlot!),
         Tag.CharArray => new NpgsqlParameter<char[]>("", (char[])_referenceSlot!),
-        Tag.Jsonb => new NpgsqlParameter { Value = (string)_referenceSlot!, NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb },
-        Tag.JsonbArray => new NpgsqlParameter { Value = (string[])_referenceSlot!, NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb | NpgsqlTypes.NpgsqlDbType.Array },
+        Tag.Jsonb => new NpgsqlParameter { Value = (string)_referenceSlot!, NpgsqlDbType = NpgsqlDbType.Jsonb },
+        Tag.JsonbArray => new NpgsqlParameter { Value = (string[])_referenceSlot!, NpgsqlDbType = NpgsqlDbType.Jsonb | NpgsqlDbType.Array },
         Tag.DbNull => new NpgsqlParameter { Value = DBNull.Value },
         _ => throw new InvalidOperationException($"PostgresValue has no value (tag: {_tag})"),
     };
@@ -1299,11 +1449,11 @@ public readonly record struct PostgresValue : IUnion
     public static implicit operator PostgresValue(TimeSpan value) => new(value);
     public static implicit operator PostgresValue(NpgsqlInterval value) => new(value);
     public static implicit operator PostgresValue(NpgsqlPoint value) => new(value);
-    public static implicit operator PostgresValue(string value) => new(value);
-    public static implicit operator PostgresValue(byte[] value) => new(value);
-    public static implicit operator PostgresValue(BitArray value) => new(value);
-    public static implicit operator PostgresValue(IPAddress value) => new(value);
-    public static implicit operator PostgresValue(PhysicalAddress value) => new(value);
+    public static implicit operator PostgresValue(string? value) => value is not null ? new(value) : Null;
+    public static implicit operator PostgresValue(byte[]? value) => value is not null ? new(value) : Null;
+    public static implicit operator PostgresValue(BitArray? value) => value is not null ? new(value) : Null;
+    public static implicit operator PostgresValue(IPAddress? value) => value is not null ? new(value) : Null;
+    public static implicit operator PostgresValue(PhysicalAddress? value) => value is not null ? new(value) : Null;
     public static implicit operator PostgresValue(NpgsqlInet value) => new(value);
     public static implicit operator PostgresValue(NpgsqlCidr value) => new(value);
     public static implicit operator PostgresValue(NpgsqlBox value) => new(value);
@@ -1312,8 +1462,8 @@ public readonly record struct PostgresValue : IUnion
     public static implicit operator PostgresValue(NpgsqlLine value) => new(value);
     public static implicit operator PostgresValue(NpgsqlPath value) => new(value);
     public static implicit operator PostgresValue(NpgsqlPolygon value) => new(value);
-    public static implicit operator PostgresValue(NpgsqlTsVector value) => new(value);
-    public static implicit operator PostgresValue(NpgsqlTsQuery value) => new(value);
+    public static implicit operator PostgresValue(NpgsqlTsVector? value) => value is not null ? new(value) : Null;
+    public static implicit operator PostgresValue(NpgsqlTsQuery? value) => value is not null ? new(value) : Null;
     public static implicit operator PostgresValue(BigInteger value) => new(value);
     public static implicit operator PostgresValue(NpgsqlRange<int> value) => new(value);
     public static implicit operator PostgresValue(NpgsqlRange<long> value) => new(value);
@@ -1328,7 +1478,7 @@ public readonly record struct PostgresValue : IUnion
     public static implicit operator PostgresValue(float[] value) => new(value);
     public static implicit operator PostgresValue(double[] value) => new(value);
     public static implicit operator PostgresValue(decimal[] value) => new(value);
-    public static implicit operator PostgresValue(string[] value) => new(value);
+    public static implicit operator PostgresValue(string?[] value) => new(value);
     public static implicit operator PostgresValue(Guid[] value) => new(value);
     public static implicit operator PostgresValue(DateTime[] value) => new(value);
     public static implicit operator PostgresValue(DateTimeOffset[] value) => new(value);
