@@ -1,6 +1,3 @@
-using Npgsql;
-using StringThing.Npgsql;
-using StringThing.Npgsql.Dapper;
 using Xunit;
 
 namespace StringThing.Npgsql.Dapper.IntegrationTests;

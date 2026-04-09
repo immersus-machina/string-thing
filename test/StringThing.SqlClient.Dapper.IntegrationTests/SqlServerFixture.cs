@@ -1,7 +1,7 @@
 using Testcontainers.MsSql;
 using Xunit;
 
-namespace StringThing.SqlClient.IntegrationTests;
+namespace StringThing.SqlClient.Dapper.IntegrationTests;
 
 public class SqlServerFixture : IAsyncLifetime
 {

@@ -4,6 +4,7 @@
     <Project Path="src/StringThing.Npgsql/StringThing.Npgsql.csproj" />
     <Project Path="src/StringThing.Npgsql.Dapper/StringThing.Npgsql.Dapper.csproj" />
     <Project Path="src/StringThing.SqlClient/StringThing.SqlClient.csproj" />
+    <Project Path="src/StringThing.SqlClient.Dapper/StringThing.SqlClient.Dapper.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/StringThing.Npgsql.Tests/StringThing.Npgsql.Tests.csproj" />
@@ -11,5 +12,6 @@
     <Project Path="test/StringThing.Npgsql.Dapper.IntegrationTests/StringThing.Npgsql.Dapper.IntegrationTests.csproj" />
     <Project Path="test/StringThing.SqlClient.Tests/StringThing.SqlClient.Tests.csproj" />
     <Project Path="test/StringThing.SqlClient.IntegrationTests/StringThing.SqlClient.IntegrationTests.csproj" />
+    <Project Path="test/StringThing.SqlClient.Dapper.IntegrationTests/StringThing.SqlClient.Dapper.IntegrationTests.csproj" />
   </Folder>
 </Solution>
