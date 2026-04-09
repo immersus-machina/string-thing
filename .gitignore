@@ -218,3 +218,5 @@ ASALocalRun/
 
 # dotnet tool manifest
 !.config/dotnet-tools.json
+
+*.lscache

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/StringThing.Core/StringThing.Core.csproj" />
+    <Project Path="src/StringThing.Npgsql/StringThing.Npgsql.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/StringThing.Npgsql.Tests/StringThing.Npgsql.Tests.csproj" />
+  </Folder>
+</Solution>
