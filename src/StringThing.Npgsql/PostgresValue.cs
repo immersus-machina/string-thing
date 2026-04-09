@@ -8,8 +8,7 @@ using NpgsqlTypes;
 
 namespace StringThing.Npgsql;
 
-[Union]
-public readonly record struct PostgresValue : IUnion
+public readonly record struct PostgresValue
 {
     public enum Tag : byte
     {
