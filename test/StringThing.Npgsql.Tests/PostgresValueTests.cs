@@ -119,6 +119,20 @@ public class PostgresValueTests
             data.Add(new[] { true, false }, new[] { true, false }, typeof(bool[]));
             data.Add(new[] { 1.5, 2.5 }, new[] { 1.5, 2.5 }, typeof(double[]));
             data.Add(new[] { IPAddress.Loopback }, new[] { IPAddress.Loopback }, typeof(IPAddress[]));
+            data.Add(new[] { 'A', 'B' }, new[] { 'A', 'B' }, typeof(char[]));
+            data.Add(new[] { (short)1, (short)2 }, new[] { (short)1, (short)2 }, typeof(short[]));
+            data.Add(new[] { 1.5f, 2.5f }, new[] { 1.5f, 2.5f }, typeof(float[]));
+            data.Add(new[] { 99.99m }, new[] { 99.99m }, typeof(decimal[]));
+            data.Add(new[] { Guid.Empty }, new[] { Guid.Empty }, typeof(Guid[]));
+            data.Add(new[] { new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }, new[] { new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }, typeof(DateTime[]));
+            data.Add(new[] { new DateOnly(2026, 1, 1) }, new[] { new DateOnly(2026, 1, 1) }, typeof(DateOnly[]));
+            data.Add(new[] { new TimeOnly(12, 0) }, new[] { new TimeOnly(12, 0) }, typeof(TimeOnly[]));
+            data.Add(new[] { TimeSpan.FromHours(1) }, new[] { TimeSpan.FromHours(1) }, typeof(TimeSpan[]));
+            data.Add(new[] { new NpgsqlPoint(1, 2) }, new[] { new NpgsqlPoint(1, 2) }, typeof(NpgsqlPoint[]));
+            data.Add(new[] { new NpgsqlBox(1, 2, 0, 0) }, new[] { new NpgsqlBox(1, 2, 0, 0) }, typeof(NpgsqlBox[]));
+            data.Add(new[] { new NpgsqlCircle(1, 2, 3) }, new[] { new NpgsqlCircle(1, 2, 3) }, typeof(NpgsqlCircle[]));
+            data.Add(new[] { new NpgsqlLine(1, 2, 3) }, new[] { new NpgsqlLine(1, 2, 3) }, typeof(NpgsqlLine[]));
+            data.Add(new[] { new NpgsqlLSeg(0, 0, 1, 1) }, new[] { new NpgsqlLSeg(0, 0, 1, 1) }, typeof(NpgsqlLSeg[]));
 
             return data;
         }
