@@ -20,6 +20,12 @@ public sealed class SqlServerSql : SqlStatement<NamedParameterNamer>
     public static SqlServerValue DateTime(DateTime value) => new(value, SqlDbType.DateTime);
 
     /// <summary>
+    /// Creates a Table-Valued Parameter for use in SQL Server queries.
+    /// Requires a matching type defined on the server (CREATE TYPE ... AS TABLE).
+    /// </summary>
+    public static SqlServerValue Table(DataTable table, string typeName) => new(new SqlServerTable(table, typeName), SqlDbType.Structured);
+
+    /// <summary>
     /// Composes multiple <see cref="ISqlServerRow"/> instances into a comma-separated VALUES fragment
     /// for use in INSERT statements. Requires at least one row.
     /// </summary>

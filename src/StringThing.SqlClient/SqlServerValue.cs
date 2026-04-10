@@ -16,6 +16,9 @@ public readonly record struct SqlServerValue
 
     public SqlParameter ToSqlParameter()
     {
+        if (Value is SqlServerTable tvp)
+            return new SqlParameter { Value = tvp.Table, SqlDbType = SqlDbType.Structured, TypeName = tvp.TypeName };
+
         return new SqlParameter { Value = Value ?? DBNull.Value, SqlDbType = Type };
     }
 

@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.Data.SqlClient;
 using Xunit;
 
@@ -14,17 +15,31 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
         await using var connection = new SqlConnection(sqlServer.ConnectionString);
         await connection.OpenAsync(CancellationToken);
 
-        await using var createTable = new SqlCommand("""
+        await connection.ExecuteAsync(
+            $"""
             IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'dapper_users')
             CREATE TABLE dapper_users (
                 id int PRIMARY KEY,
                 name nvarchar(100) NOT NULL,
                 email nvarchar(200) NULL
-            )
-            """, connection);
-        await createTable.ExecuteNonQueryAsync(CancellationToken);
+            );
+            IF NOT EXISTS (SELECT * FROM sys.types WHERE name = 'UserTableType')
+            CREATE TYPE dbo.UserTableType AS TABLE (
+                id int,
+                name nvarchar(100),
+                email nvarchar(200) NULL
+            );
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'tvp_users')
+            CREATE TABLE tvp_users (
+                id int PRIMARY KEY,
+                name nvarchar(100) NOT NULL,
+                email nvarchar(200) NULL
+            );
+            """,
+            CancellationToken);
 
-        await using var insert = new SqlCommand("""
+        await connection.ExecuteAsync(
+            $"""
             IF NOT EXISTS (SELECT 1 FROM dapper_users WHERE id = 1)
             BEGIN
                 INSERT INTO dapper_users (id, name, email) VALUES
@@ -32,8 +47,8 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
                     (2, 'bob', NULL),
                     (3, 'carol', 'carol@example.com')
             END
-            """, connection);
-        await insert.ExecuteNonQueryAsync(CancellationToken);
+            """,
+            CancellationToken);
     }
 
     private record User(int Id, string Name, string? Email);
@@ -101,8 +116,9 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
         await connection.OpenAsync(CancellationToken);
 
         // Act
+        var maxId = 3;
         var count = await connection.ExecuteScalarAsync<int>(
-            $"SELECT {Sql.Unsafe("COUNT(*)")} FROM dapper_users WHERE email IS NOT NULL",
+            $"SELECT {Sql.Unsafe("COUNT(*)")} FROM dapper_users WHERE email IS NOT NULL AND id <= {maxId}",
             CancellationToken);
 
         // Assert
@@ -149,5 +165,79 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
         // Assert
         Assert.Equal("dave", user.Name);
         Assert.Null(user.Email);
+    }
+
+    // --- Multi insert with ISqlServerRow ---
+
+    private record InsertUser(int Id, string Name, string? Email) : ISqlServerRow
+    {
+        public SqlFragment RowValues => $"({Id}, {Name}, {Email})";
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenInsertingMultipleRowsWithISqlServerRow_InsertsAllRows()
+    {
+        // Arrange
+        await using var connection = new SqlConnection(sqlServer.ConnectionString);
+        await connection.OpenAsync(CancellationToken);
+
+        InsertUser[] users =
+        [
+            new(50, "eve", "eve@example.com"),
+            new(51, "frank", null),
+            new(52, "grace", "grace@example.com"),
+        ];
+
+        // Act
+        await connection.ExecuteAsync(
+            $"INSERT INTO dapper_users (id, name, email) VALUES {SqlServerSql.InsertRows(users)}",
+            CancellationToken);
+
+        // Assert
+        var inserted = (await connection.QueryAsync<User>(
+            $"SELECT id, name, email FROM dapper_users WHERE id >= {50} AND id <= {52} ORDER BY id",
+            CancellationToken)).ToList();
+        Assert.Equal(3, inserted.Count);
+        Assert.Equal("eve", inserted[0].Name);
+        Assert.Equal("eve@example.com", inserted[0].Email);
+        Assert.Equal("frank", inserted[1].Name);
+        Assert.Null(inserted[1].Email);
+        Assert.Equal("grace", inserted[2].Name);
+    }
+
+    // --- Batch insert with Table-Valued Parameter ---
+
+    [Fact]
+    public async Task ExecuteAsync_WhenInsertingWithTableValuedParameter_InsertsAllRows()
+    {
+        // Arrange
+        await using var connection = new SqlConnection(sqlServer.ConnectionString);
+        await connection.OpenAsync(CancellationToken);
+
+        using var table = new DataTable();
+        table.Columns.Add("id", typeof(int));
+        table.Columns.Add("name", typeof(string));
+        table.Columns.Add("email", typeof(string));
+        table.Rows.Add(70, "heidi", "heidi@example.com");
+        table.Rows.Add(71, "ivan", DBNull.Value);
+        table.Rows.Add(72, "judy", "judy@example.com");
+
+        // Act
+        await connection.ExecuteAsync(
+            $"INSERT INTO tvp_users (id, name, email) SELECT id, name, email FROM {SqlServerSql.Table(table, "dbo.UserTableType")}",
+            CancellationToken);
+
+        // Assert
+        var minId = 70;
+        var maxId = 72;
+        var results = (await connection.QueryAsync<User>(
+            $"SELECT id, name, email FROM tvp_users WHERE id >= {minId} AND id <= {maxId} ORDER BY id",
+            CancellationToken)).ToList();
+
+        Assert.Equal(3, results.Count);
+        Assert.Equal("heidi", results[0].Name);
+        Assert.Equal("ivan", results[1].Name);
+        Assert.Null(results[1].Email);
+        Assert.Equal("judy", results[2].Name);
     }
 }

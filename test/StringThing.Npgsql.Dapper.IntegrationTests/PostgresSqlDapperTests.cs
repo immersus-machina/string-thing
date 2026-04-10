@@ -12,23 +12,23 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
     {
         await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
         await connection.ExecuteAsync(
-            $"{Sql.Unsafe("""
-                CREATE TABLE IF NOT EXISTS dapper_users (
-                    id integer PRIMARY KEY,
-                    name text NOT NULL,
-                    email text
-                )
-                """)}",
+            $"""
+            CREATE TABLE IF NOT EXISTS dapper_users (
+                id integer PRIMARY KEY,
+                name text NOT NULL,
+                email text
+            )
+            """,
             CancellationToken);
 
         await connection.ExecuteAsync(
-            $"{Sql.Unsafe("""
-                INSERT INTO dapper_users (id, name, email) VALUES
-                    (1, 'alice', 'alice@example.com'),
-                    (2, 'bob', NULL),
-                    (3, 'carol', 'carol@example.com')
-                ON CONFLICT (id) DO NOTHING
-                """)}",
+            $"""
+            INSERT INTO dapper_users (id, name, email) VALUES
+                (1, 'alice', 'alice@example.com'),
+                (2, 'bob', NULL),
+                (3, 'carol', 'carol@example.com')
+            ON CONFLICT (id) DO NOTHING
+            """,
             CancellationToken);
     }
 
