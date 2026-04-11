@@ -1,7 +1,7 @@
-namespace StringThing;
+namespace StringThing.UnsafeSql;
 
-public readonly struct UnsafeSql
+public readonly struct UnsafeSqlFragment
 {
-    public string RawText { get; }
-    internal UnsafeSql(string rawText) { RawText = rawText; }
+    internal string RawText { get; }
+    internal UnsafeSqlFragment(string rawText) { RawText = rawText; }
 }

@@ -1,6 +1,7 @@
+using StringThing.Core;
 using Xunit;
 
-namespace StringThing.SqlClient.Tests;
+namespace StringThing.Core.Tests;
 
 public class NamedParameterNamerTests
 {

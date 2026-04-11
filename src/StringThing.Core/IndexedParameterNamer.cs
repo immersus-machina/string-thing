@@ -1,4 +1,4 @@
-namespace StringThing.SqlClient;
+namespace StringThing.Core;
 
 public sealed class IndexedParameterNamer : IParameterNamer
 {

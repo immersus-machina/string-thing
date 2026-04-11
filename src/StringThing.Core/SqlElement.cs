@@ -1,4 +1,4 @@
-namespace StringThing;
+namespace StringThing.Core;
 
 internal readonly record struct SqlElement<TParameter> where TParameter : class
 {

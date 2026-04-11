@@ -7,6 +7,7 @@
     <Project Path="src/StringThing.SqlClient.Dapper/StringThing.SqlClient.Dapper.csproj" />
   </Folder>
   <Folder Name="/test/">
+    <Project Path="test/StringThing.Core.Tests/StringThing.Core.Tests.csproj" />
     <Project Path="test/StringThing.Npgsql.Tests/StringThing.Npgsql.Tests.csproj" />
     <Project Path="test/StringThing.Npgsql.IntegrationTests/StringThing.Npgsql.IntegrationTests.csproj" />
     <Project Path="test/StringThing.Npgsql.Dapper.IntegrationTests/StringThing.Npgsql.Dapper.IntegrationTests.csproj" />

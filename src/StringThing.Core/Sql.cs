@@ -1,6 +1,6 @@
-namespace StringThing;
+namespace StringThing.UnsafeSql;
 
 public static class Sql
 {
-    public static UnsafeSql Unsafe(string rawSql) => new(rawSql);
+    public static UnsafeSqlFragment Unsafe(string rawSql) => new(rawSql);
 }

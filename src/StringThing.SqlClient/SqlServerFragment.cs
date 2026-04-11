@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Microsoft.Data.SqlClient;
+using StringThing.Core;
 
 namespace StringThing.SqlClient;
 

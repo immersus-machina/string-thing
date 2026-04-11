@@ -1,7 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Text;
+using StringThing.UnsafeSql;
 
-namespace StringThing;
+namespace StringThing.Core;
 
 public abstract class SqlStatement<TNamer, TParameter>
     where TNamer : IParameterNamer
@@ -27,7 +28,7 @@ public abstract class SqlStatement<TNamer, TParameter>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AppendFormatted(UnsafeSql rawSqlFragment)
+    public void AppendFormatted(UnsafeSqlFragment rawSqlFragment)
     {
         _sql.Append(rawSqlFragment.RawText);
     }

@@ -1,5 +1,8 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
+using StringThing.Core;
+using StringThing.UnsafeSql;
+
 using Xunit;
 
 namespace StringThing.SqlClient.Dapper.IntegrationTests;

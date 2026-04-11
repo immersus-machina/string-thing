@@ -1,3 +1,6 @@
+using StringThing.Core;
+using StringThing.UnsafeSql;
+
 using Xunit;
 
 namespace StringThing.Npgsql.IntegrationTests;

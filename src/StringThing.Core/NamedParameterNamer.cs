@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace StringThing.SqlClient;
+namespace StringThing.Core;
 
 public sealed class NamedParameterNamer : IParameterNamer
 {

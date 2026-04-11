@@ -1,3 +1,5 @@
+using StringThing.Core;
+
 namespace StringThing.Npgsql;
 
 public sealed class PostgresParameterNamer : IParameterNamer

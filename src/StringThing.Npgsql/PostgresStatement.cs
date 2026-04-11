@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Npgsql;
+using StringThing.Core;
 
 namespace StringThing.Npgsql;
 

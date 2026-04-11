@@ -1,4 +1,4 @@
-namespace StringThing;
+namespace StringThing.Core;
 
 public interface IParameterNamer
 {

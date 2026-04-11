@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
+using StringThing.UnsafeSql;
 
-namespace StringThing;
+
+namespace StringThing.Core;
 
 /// <summary>
 /// A composable SQL fragment that captures parameters for splicing into a <see cref="SqlStatement{TNamer, TParameter}"/>.
@@ -21,7 +23,7 @@ public class SqlFragment<TParameter> where TParameter : class
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AppendFormatted(UnsafeSql rawSqlFragment)
+    public void AppendFormatted(UnsafeSqlFragment rawSqlFragment)
     {
         _elements.Add(SqlElement<TParameter>.Literal(rawSqlFragment.RawText));
     }
