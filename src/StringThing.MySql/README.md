@@ -1,6 +1,6 @@
 # StringThing.MySql
 
-Compile-time type-safe interpolated SQL for MySQL/MariaDB, built on MySqlConnector. Part of [StringThing](https://github.com/immersus-machina/string-thing).
+Injection-safe interpolated SQL for MySQL/MariaDB with type-checked parameterization, built on MySqlConnector. Part of [StringThing](https://github.com/immersus-machina/string-thing).
 
 ## Quick start
 

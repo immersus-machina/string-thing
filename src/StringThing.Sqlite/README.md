@@ -1,6 +1,8 @@
 # StringThing.Sqlite
 
-Compile-time type-safe interpolated SQL for SQLite, built on Microsoft.Data.Sqlite. Part of [StringThing](https://github.com/immersus-machina/string-thing).
+Injection-safe interpolated SQL for SQLite, built on Microsoft.Data.Sqlite. Part of [StringThing](https://github.com/immersus-machina/string-thing).
+
+SQLite is dynamically typed — the compile-time type contract here is light. The value is injection safety by construction, parameter deduplication, and composable fragments.
 
 ## Quick start
 

@@ -1,6 +1,6 @@
 # StringThing.SqlClient
 
-Compile-time type-safe interpolated SQL for SQL Server, built on Microsoft.Data.SqlClient. Part of [StringThing](https://github.com/immersus-machina/string-thing).
+Injection-safe interpolated SQL for SQL Server with type-checked parameterization, built on Microsoft.Data.SqlClient. Part of [StringThing](https://github.com/immersus-machina/string-thing).
 
 ## Quick start
 
