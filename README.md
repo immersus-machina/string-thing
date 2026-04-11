@@ -25,7 +25,7 @@ One package per provider. No string overload — the only path is `$"..."`.
 - **Injection safety by construction.** There is no way to pass a raw string as SQL. `Sql.Unsafe()` is the explicit, auditable escape hatch.
 - **Parameter deduplication.** `$"WHERE a = {x} OR b = {x}"` produces one parameter. By variable identity, not value.
 - **Composable fragments.** Build `WHERE` clauses as typed fragments. Splice them in. Parameters renumber automatically.
-- **Multi-row inserts.** `InsertRows` for VALUES composition, UNNEST for Postgres, TVPs for SQL Server.
+- **Multi-row inserts.** `InsertRows` for VALUES composition, TVPs for SQL Server.
 
 ## Provider depth
 
@@ -50,6 +50,28 @@ All providers share: injection safety, parameter deduplication, composable fragm
 | `StringThing.Sqlite` | Microsoft.Data.Sqlite |
 
 Each provider has a `.Dapper` companion package that adds Dapper result mapping with internalized Dapper (not exposed as a dependency).
+
+## Performance
+
+Benchmarked against raw ADO.NET and Dapper on SQLite in-memory. Queries return one row (`LIMIT 1`) to isolate parameter binding overhead from result set materialization. Raw ADO.NET subtracted to show pure library overhead.
+
+### Query and insert overhead
+
+| Scenario | Dapper | StringThing | ST vs Dapper |
+|----------|--------|-------------|--------------|
+| QuerySingle 1 param | +0.94 us / +0.68 KB | +1.03 us / +0.63 KB | +10% time, -7% alloc |
+| Query 2 params | +1.28 us / +0.89 KB | +1.17 us / +0.64 KB | -9% time, -28% alloc |
+| Query 5 params | +1.68 us / +1.54 KB | +1.54 us / +0.81 KB | -8% time, -47% alloc |
+| Execute insert | +0.86 us / +1.12 KB | +0.39 us / +0.36 KB | -54% time, -68% alloc |
+
+### IN list overhead
+
+| Scenario | Dapper | StringThing | ST vs Dapper |
+|----------|--------|-------------|--------------|
+| IN 10 items | +4.28 us / +3.87 KB | +2.60 us / +3.99 KB | -39% time |
+| IN 100 items | +71.58 us / +28.23 KB | +13.61 us / +26.86 KB | -81% time |
+
+Standard queries are within ~10% of Dapper, with consistently lower allocations (no anonymous object reflection). IN list expansion is where StringThing pulls ahead — Dapper rewrites the SQL string at runtime, StringThing builds the parameterized list directly.
 
 ## What it is not
 

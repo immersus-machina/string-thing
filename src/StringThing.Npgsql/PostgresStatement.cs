@@ -8,8 +8,12 @@ namespace StringThing.Npgsql;
 public class PostgresStatement<TNamer> : SqlStatement<TNamer, NpgsqlParameter>
     where TNamer : IParameterNamer
 {
-    public PostgresStatement(int literalLength, int formattedCount)
-        : base(literalLength, formattedCount) { }
+    public PostgresStatement(
+        int literalLength,
+        int formattedCount,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0)
+        : base(literalLength, formattedCount, filePath, lineNumber) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendFormatted(PostgresValue value,

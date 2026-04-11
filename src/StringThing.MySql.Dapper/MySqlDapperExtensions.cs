@@ -1,5 +1,3 @@
-using System.Data;
-using System.Data.Common;
 using Dapper;
 using MySqlConnector;
 
@@ -9,7 +7,7 @@ public static class MySqlDapperExtensions
 {
     // --- Query<T> ---
 
-    public static IEnumerable<T> QueryString<T>(
+    public static List<T> QueryString<T>(
         this MySqlConnection connection,
         MySql statement)
     {
@@ -18,7 +16,7 @@ public static class MySqlDapperExtensions
         return reader.Parse<T>().ToList();
     }
 
-    public static async Task<IEnumerable<T>> QueryStringAsync<T>(
+    public static async Task<List<T>> QueryStringAsync<T>(
         this MySqlConnection connection,
         MySql statement,
         CancellationToken cancellationToken = default)
@@ -167,24 +165,5 @@ public static class MySqlDapperExtensions
         await using var command = statement.ToCommand(connection);
         var result = await command.ExecuteScalarAsync(cancellationToken);
         return result is DBNull or null ? default : (T)Convert.ChangeType(result, typeof(T));
-    }
-
-    // --- ExecuteReader ---
-
-    public static IDataReader ExecuteStringReader(
-        this MySqlConnection connection,
-        MySql statement)
-    {
-        var command = statement.ToCommand(connection);
-        return command.ExecuteReader(CommandBehavior.CloseConnection);
-    }
-
-    public static async Task<DbDataReader> ExecuteStringReaderAsync(
-        this MySqlConnection connection,
-        MySql statement,
-        CancellationToken cancellationToken = default)
-    {
-        var command = statement.ToCommand(connection);
-        return await command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken);
     }
 }

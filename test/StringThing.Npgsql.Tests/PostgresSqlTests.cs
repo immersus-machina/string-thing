@@ -871,7 +871,7 @@ public class PostgresSqlTests
     // --- Value capture behavior ---
 
     [Fact]
-    public void WhenVariableChangesAfterFragmentCreation_FragmentRetainsOriginalValue()
+    public void WhenVariableChangesAfterFragmentCreation_StaticParamsResolvedBeforeFragmentParams()
     {
         // Arrange
         var minAge = 18;
@@ -882,8 +882,9 @@ public class PostgresSqlTests
         PostgresSql stmt = $"SELECT * FROM users WHERE {filter} OR age >= {minAge}";
 
         // Assert
-        Assert.Equal(18, stmt.Parameters[0].Value);
-        Assert.Equal(99, stmt.Parameters[1].Value);
+        Assert.Equal("SELECT * FROM users WHERE age >= $2 OR age >= $1", stmt.Sql);
+        Assert.Equal(99, stmt.Parameters[0].Value);
+        Assert.Equal(18, stmt.Parameters[1].Value);
     }
 
     // --- Large-scale composition stress tests ---

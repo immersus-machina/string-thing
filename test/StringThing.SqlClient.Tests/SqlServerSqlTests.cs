@@ -172,7 +172,7 @@ public class SqlServerSqlTests
     }
 
     [Fact]
-    public void WhenVariableChangesAfterFragmentCreation_FragmentRetainsOriginalValue()
+    public void WhenVariableChangesAfterFragmentCreation_StaticParamsResolvedBeforeFragmentParams()
     {
         // Arrange
         var minAge = 18;
@@ -183,8 +183,8 @@ public class SqlServerSqlTests
         SqlServerSql stmt = $"SELECT * FROM users WHERE {filter} OR age >= {minAge}";
 
         // Assert
-        Assert.Equal(18, stmt.Parameters[0].Value);
-        Assert.Equal(99, stmt.Parameters[1].Value);
+        Assert.Equal(99, stmt.Parameters[0].Value);
+        Assert.Equal(18, stmt.Parameters[1].Value);
     }
 
     [Fact]

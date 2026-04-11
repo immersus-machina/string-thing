@@ -8,8 +8,12 @@ namespace StringThing.SqlClient;
 [InterpolatedStringHandler]
 public sealed class SqlServerSql : SqlServerStatement<NamedParameterNamer>
 {
-    public SqlServerSql(int literalLength, int formattedCount)
-        : base(literalLength, formattedCount) { }
+    public SqlServerSql(
+        int literalLength,
+        int formattedCount,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0)
+        : base(literalLength, formattedCount, filePath, lineNumber) { }
 
     /// <summary>
     /// Creates a VarChar (non-Unicode) parameter instead of the default NVarChar.

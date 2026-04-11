@@ -1,5 +1,4 @@
 using Microsoft.Data.Sqlite;
-using StringThing.Sqlite.Dapper;
 using Xunit;
 
 namespace StringThing.Sqlite.Dapper.IntegrationTests;
@@ -157,7 +156,7 @@ public class SqliteDapperTests
 
         // Act
         connection.ExecuteString(
-            $"INSERT INTO users (id, name, email) VALUES {Sqlite.InsertRows(users)}");
+            $"INSERT INTO users (id, name, email) VALUES {SqliteSql.InsertRows(users)}");
 
         // Assert
         var minId = 50;

@@ -8,8 +8,12 @@ namespace StringThing.SqlClient;
 public class SqlServerStatement<TNamer> : SqlStatement<TNamer, SqlParameter>
     where TNamer : IParameterNamer
 {
-    public SqlServerStatement(int literalLength, int formattedCount)
-        : base(literalLength, formattedCount) { }
+    public SqlServerStatement(
+        int literalLength,
+        int formattedCount,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0)
+        : base(literalLength, formattedCount, filePath, lineNumber) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendFormatted(SqlServerValue value,

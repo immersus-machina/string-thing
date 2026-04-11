@@ -40,7 +40,7 @@ public class SqliteIntegrationTests
         // Arrange
         using var connection = CreateDatabase();
         var userId = 1;
-        Sqlite stmt = $"SELECT name FROM users WHERE id = {userId}";
+        SqliteSql stmt = $"SELECT name FROM users WHERE id = {userId}";
         using var command = stmt.ToCommand(connection);
 
         // Act
@@ -56,7 +56,7 @@ public class SqliteIntegrationTests
         // Arrange
         using var connection = CreateDatabase();
         var userId = 2;
-        Sqlite stmt = $"SELECT email FROM users WHERE id = {userId}";
+        SqliteSql stmt = $"SELECT email FROM users WHERE id = {userId}";
         using var command = stmt.ToCommand(connection);
 
         // Act
@@ -73,7 +73,7 @@ public class SqliteIntegrationTests
         using var connection = CreateDatabase();
         var minId = 1;
         var active = true;
-        Sqlite stmt = $"SELECT name FROM users WHERE id > {minId} AND active = {active} ORDER BY id";
+        SqliteSql stmt = $"SELECT name FROM users WHERE id > {minId} AND active = {active} ORDER BY id";
         using var command = stmt.ToCommand(connection);
 
         // Act
@@ -92,7 +92,7 @@ public class SqliteIntegrationTests
         // Arrange
         using var connection = CreateDatabase();
         var searchTerm = "alice";
-        Sqlite stmt = $"SELECT name FROM users WHERE name = {searchTerm} OR email LIKE {searchTerm} || '%'";
+        SqliteSql stmt = $"SELECT name FROM users WHERE name = {searchTerm} OR email LIKE {searchTerm} || '%'";
         using var command = stmt.ToCommand(connection);
 
         // Act
@@ -110,11 +110,11 @@ public class SqliteIntegrationTests
         var id = 99;
         var name = "dave";
         string? email = null;
-        Sqlite insertStmt = $"INSERT INTO users (id, name, email) VALUES ({id}, {name}, {email})";
+        SqliteSql insertStmt = $"INSERT INTO users (id, name, email) VALUES ({id}, {name}, {email})";
         using var insertCmd = insertStmt.ToCommand(connection);
         insertCmd.ExecuteNonQuery();
 
-        Sqlite selectStmt = $"SELECT email FROM users WHERE id = {id}";
+        SqliteSql selectStmt = $"SELECT email FROM users WHERE id = {id}";
         using var selectCmd = selectStmt.ToCommand(connection);
 
         // Act
@@ -131,7 +131,7 @@ public class SqliteIntegrationTests
         using var connection = CreateDatabase();
         var tableName = Sql.Unsafe("users");
         var userId = 3;
-        Sqlite stmt = $"SELECT name FROM {tableName} WHERE id = {userId}";
+        SqliteSql stmt = $"SELECT name FROM {tableName} WHERE id = {userId}";
         using var command = stmt.ToCommand(connection);
 
         // Act
@@ -149,7 +149,7 @@ public class SqliteIntegrationTests
         var minId = 0;
         var active = true;
         SqliteFragment filter = $"id > {minId} AND active = {active}";
-        Sqlite stmt = $"SELECT name FROM users WHERE {filter} ORDER BY id";
+        SqliteSql stmt = $"SELECT name FROM users WHERE {filter} ORDER BY id";
         using var command = stmt.ToCommand(connection);
 
         // Act
@@ -181,7 +181,7 @@ public class SqliteIntegrationTests
             new(51, "frank", null),
             new(52, "grace", "grace@example.com"),
         ];
-        Sqlite stmt = $"INSERT INTO users (id, name, email) VALUES {Sqlite.InsertRows(users)}";
+        SqliteSql stmt = $"INSERT INTO users (id, name, email) VALUES {SqliteSql.InsertRows(users)}";
         using var command = stmt.ToCommand(connection);
 
         // Act

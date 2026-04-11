@@ -1,5 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using Dapper;
 using Npgsql;
 using StringThing.Npgsql;
 

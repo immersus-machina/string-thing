@@ -1,6 +1,7 @@
 using BenchmarkDotNet.Attributes;
 using Dapper;
 using Microsoft.Data.Sqlite;
+using StringThing.Sqlite;
 using StringThing.Sqlite.Dapper;
 
 namespace StringThing.Benchmarks;
@@ -90,7 +91,7 @@ public class InListBenchmarks
     public List<User> StringThing_InList_Ten()
     {
         return _connection.QueryString<User>(
-            $"SELECT id, name, email FROM users WHERE id IN {StringThing.Sqlite.Sqlite.InList([.. _tenItems])}").ToList();
+            $"SELECT id, name, email FROM users WHERE id IN {SqliteSql.InList([.. _tenItems])}").ToList();
     }
 
     // --- 100 items ---
@@ -121,6 +122,6 @@ public class InListBenchmarks
     public List<User> StringThing_InList_Hundred()
     {
         return _connection.QueryString<User>(
-            $"SELECT id, name, email FROM users WHERE id IN {StringThing.Sqlite.Sqlite.InList([.. _hundredItems])}").ToList();
+            $"SELECT id, name, email FROM users WHERE id IN {SqliteSql.InList([.. _hundredItems])}").ToList();
     }
 }

@@ -8,8 +8,12 @@ namespace StringThing.Sqlite;
 public class SqliteStatement<TNamer> : SqlStatement<TNamer, SqliteParameter>
     where TNamer : IParameterNamer
 {
-    public SqliteStatement(int literalLength, int formattedCount)
-        : base(literalLength, formattedCount) { }
+    public SqliteStatement(
+        int literalLength,
+        int formattedCount,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0)
+        : base(literalLength, formattedCount, filePath, lineNumber) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendFormatted(SqliteValue value,

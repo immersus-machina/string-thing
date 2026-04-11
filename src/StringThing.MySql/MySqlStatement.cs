@@ -8,8 +8,12 @@ namespace StringThing.MySql;
 public class MySqlStatement<TNamer> : SqlStatement<TNamer, MySqlParameter>
     where TNamer : IParameterNamer
 {
-    public MySqlStatement(int literalLength, int formattedCount)
-        : base(literalLength, formattedCount) { }
+    public MySqlStatement(
+        int literalLength,
+        int formattedCount,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0)
+        : base(literalLength, formattedCount, filePath, lineNumber) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendFormatted(MySqlValue value,

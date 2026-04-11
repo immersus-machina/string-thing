@@ -7,8 +7,12 @@ namespace StringThing.Npgsql;
 [InterpolatedStringHandler]
 public sealed class PostgresSql : PostgresStatement<PostgresParameterNamer>
 {
-    public PostgresSql(int literalLength, int formattedCount)
-        : base(literalLength, formattedCount) { }
+    public PostgresSql(
+        int literalLength,
+        int formattedCount,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0)
+        : base(literalLength, formattedCount, filePath, lineNumber) { }
 
     /// <summary>
     /// Composes multiple <see cref="IPostgresRow"/> instances into a comma-separated VALUES fragment

@@ -17,14 +17,13 @@ All methods are extension methods on `NpgsqlConnection`:
 
 | Method | Returns |
 |--------|---------|
-| `QueryStringAsync<T>` | `Task<IEnumerable<T>>` |
+| `QueryStringAsync<T>` | `Task<List<T>>` |
 | `QueryStringFirstAsync<T>` | `Task<T>` |
 | `QueryStringFirstOrDefaultAsync<T>` | `Task<T?>` |
 | `QueryStringSingleAsync<T>` | `Task<T>` |
 | `QueryStringSingleOrDefaultAsync<T>` | `Task<T?>` |
 | `ExecuteStringAsync` | `Task<int>` |
 | `ExecuteStringScalarAsync<T>` | `Task<T?>` |
-| `ExecuteStringReaderAsync` | `Task<DbDataReader>` |
 
 Synchronous variants are also available (without the `Async` suffix).
 

@@ -1,6 +1,7 @@
 using BenchmarkDotNet.Attributes;
 using Dapper;
 using Microsoft.Data.Sqlite;
+using StringThing.Sqlite;
 using StringThing.Sqlite.Dapper;
 
 namespace StringThing.Benchmarks;
@@ -46,6 +47,17 @@ public class EndToEndBenchmarks
 
     // --- Single row query: 1 parameter ---
 
+    [Benchmark(Description = "Raw: QuerySingle 1 param")]
+    public User Raw_QuerySingle_OneParam()
+    {
+        using var cmd = _connection.CreateCommand();
+        cmd.CommandText = "SELECT id, name, email, age, active FROM users WHERE id = @userId";
+        cmd.Parameters.AddWithValue("@userId", 42);
+        using var reader = cmd.ExecuteReader();
+        reader.Read();
+        return new User(reader.GetInt64(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2), reader.GetInt64(3), reader.GetInt64(4));
+    }
+
     [Benchmark(Description = "Dapper: QuerySingle 1 param")]
     public User Dapper_QuerySingle_OneParam()
     {
@@ -62,50 +74,91 @@ public class EndToEndBenchmarks
             $"SELECT id, name, email, age, active FROM users WHERE id = {userId}");
     }
 
-    // --- Multiple rows query: 2 parameters ---
+    // --- Query: 2 parameters ---
+
+    [Benchmark(Description = "Raw: Query 2 params")]
+    public User Raw_Query_TwoParams()
+    {
+        using var cmd = _connection.CreateCommand();
+        cmd.CommandText = "SELECT id, name, email, age, active FROM users WHERE age > @minAge AND active = @active ORDER BY id LIMIT 1";
+        cmd.Parameters.AddWithValue("@minAge", 30);
+        cmd.Parameters.AddWithValue("@active", 1);
+        using var reader = cmd.ExecuteReader();
+        reader.Read();
+        return new User(reader.GetInt64(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2), reader.GetInt64(3), reader.GetInt64(4));
+    }
 
     [Benchmark(Description = "Dapper: Query 2 params")]
-    public List<User> Dapper_Query_TwoParams()
+    public User Dapper_Query_TwoParams()
     {
-        return _connection.Query<User>(
-            "SELECT id, name, email, age, active FROM users WHERE age > @minAge AND active = @active ORDER BY id",
-            new { minAge = 30, active = 1 }).ToList();
+        return _connection.QuerySingle<User>(
+            "SELECT id, name, email, age, active FROM users WHERE age > @minAge AND active = @active ORDER BY id LIMIT 1",
+            new { minAge = 30, active = 1 });
     }
 
     [Benchmark(Description = "StringThing: QueryString 2 params")]
-    public List<User> StringThing_Query_TwoParams()
+    public User StringThing_Query_TwoParams()
     {
         var minAge = 30;
         var active = 1;
-        return _connection.QueryString<User>(
-            $"SELECT id, name, email, age, active FROM users WHERE age > {minAge} AND active = {active} ORDER BY id").ToList();
+        return _connection.QueryStringSingle<User>(
+            $"SELECT id, name, email, age, active FROM users WHERE age > {minAge} AND active = {active} ORDER BY id LIMIT 1");
     }
 
-    // --- Query with 5 parameters ---
+    // --- Query: 5 parameters ---
+
+    [Benchmark(Description = "Raw: Query 5 params")]
+    public User Raw_Query_FiveParams()
+    {
+        using var cmd = _connection.CreateCommand();
+        cmd.CommandText = "SELECT id, name, email, age, active FROM users WHERE id > @minId AND id < @maxId AND age >= @minAge AND age <= @maxAge AND active = @active LIMIT 1";
+        cmd.Parameters.AddWithValue("@minId", 10);
+        cmd.Parameters.AddWithValue("@maxId", 50);
+        cmd.Parameters.AddWithValue("@minAge", 25);
+        cmd.Parameters.AddWithValue("@maxAge", 40);
+        cmd.Parameters.AddWithValue("@active", 1);
+        using var reader = cmd.ExecuteReader();
+        reader.Read();
+        return new User(reader.GetInt64(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2), reader.GetInt64(3), reader.GetInt64(4));
+    }
 
     [Benchmark(Description = "Dapper: Query 5 params")]
-    public List<User> Dapper_Query_FiveParams()
+    public User Dapper_Query_FiveParams()
     {
-        return _connection.Query<User>(
-            "SELECT id, name, email, age, active FROM users WHERE id > @minId AND id < @maxId AND age >= @minAge AND age <= @maxAge AND active = @active",
-            new { minId = 10, maxId = 50, minAge = 25, maxAge = 40, active = 1 }).ToList();
+        return _connection.QuerySingle<User>(
+            "SELECT id, name, email, age, active FROM users WHERE id > @minId AND id < @maxId AND age >= @minAge AND age <= @maxAge AND active = @active LIMIT 1",
+            new { minId = 10, maxId = 50, minAge = 25, maxAge = 40, active = 1 });
     }
 
     [Benchmark(Description = "StringThing: QueryString 5 params")]
-    public List<User> StringThing_Query_FiveParams()
+    public User StringThing_Query_FiveParams()
     {
         var minId = 10;
         var maxId = 50;
         var minAge = 25;
         var maxAge = 40;
         var active = 1;
-        return _connection.QueryString<User>(
-            $"SELECT id, name, email, age, active FROM users WHERE id > {minId} AND id < {maxId} AND age >= {minAge} AND age <= {maxAge} AND active = {active}").ToList();
+        return _connection.QueryStringSingle<User>(
+            $"SELECT id, name, email, age, active FROM users WHERE id > {minId} AND id < {maxId} AND age >= {minAge} AND age <= {maxAge} AND active = {active} LIMIT 1");
     }
 
     // --- Execute (insert) ---
 
     private int _insertCounter = 1000;
+
+    [Benchmark(Description = "Raw: Execute insert")]
+    public int Raw_Execute_Insert()
+    {
+        var id = Interlocked.Increment(ref _insertCounter);
+        using var cmd = _connection.CreateCommand();
+        cmd.CommandText = "INSERT OR IGNORE INTO users (id, name, email, age, active) VALUES (@id, @name, @email, @age, @active)";
+        cmd.Parameters.AddWithValue("@id", id);
+        cmd.Parameters.AddWithValue("@name", "bench");
+        cmd.Parameters.AddWithValue("@email", "bench@test.com");
+        cmd.Parameters.AddWithValue("@age", 30);
+        cmd.Parameters.AddWithValue("@active", 1);
+        return cmd.ExecuteNonQuery();
+    }
 
     [Benchmark(Description = "Dapper: Execute insert")]
     public int Dapper_Execute_Insert()
@@ -126,41 +179,5 @@ public class EndToEndBenchmarks
         var active = 1;
         return _connection.ExecuteString(
             $"INSERT OR IGNORE INTO users (id, name, email, age, active) VALUES ({id}, {name}, {email}, {age}, {active})");
-    }
-
-    // --- IN list expansion ---
-
-    [Benchmark(Description = "Dapper: IN @list 10 items")]
-    public List<User> Dapper_InList_Ten()
-    {
-        var ids = Enumerable.Range(1, 10).ToList();
-        return _connection.Query<User>(
-            "SELECT id, name, email, age, active FROM users WHERE id IN @ids",
-            new { ids }).ToList();
-    }
-
-    [Benchmark(Description = "StringThing: InList 10 items")]
-    public List<User> StringThing_InList_Ten()
-    {
-        var ids = Enumerable.Range(1, 10).ToArray();
-        return _connection.QueryString<User>(
-            $"SELECT id, name, email, age, active FROM users WHERE id IN {StringThing.Sqlite.Sqlite.InList([.. ids])}").ToList();
-    }
-
-    [Benchmark(Description = "Dapper: IN @list 100 items")]
-    public List<User> Dapper_InList_Hundred()
-    {
-        var ids = Enumerable.Range(1, 100).ToList();
-        return _connection.Query<User>(
-            "SELECT id, name, email, age, active FROM users WHERE id IN @ids",
-            new { ids }).ToList();
-    }
-
-    [Benchmark(Description = "StringThing: InList 100 items")]
-    public List<User> StringThing_InList_Hundred()
-    {
-        var ids = Enumerable.Range(1, 100).ToArray();
-        return _connection.QueryString<User>(
-            $"SELECT id, name, email, age, active FROM users WHERE id IN {StringThing.Sqlite.Sqlite.InList([.. ids])}").ToList();
     }
 }

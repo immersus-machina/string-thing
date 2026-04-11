@@ -7,8 +7,12 @@ namespace StringThing.MySql;
 [InterpolatedStringHandler]
 public sealed class MySql : MySqlStatement<NamedParameterNamer>
 {
-    public MySql(int literalLength, int formattedCount)
-        : base(literalLength, formattedCount) { }
+    public MySql(
+        int literalLength,
+        int formattedCount,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0)
+        : base(literalLength, formattedCount, filePath, lineNumber) { }
 
     /// <summary>
     /// Creates a TEXT parameter instead of the default VarChar.
