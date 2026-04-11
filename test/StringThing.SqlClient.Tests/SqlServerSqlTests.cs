@@ -198,29 +198,29 @@ public class SqlServerSqlTests
     }
 
     [Fact]
-    public void WhenUnderscoreInExpression_Throws()
+    public void WhenUnderscoreInExpression_FallsBackToIndexed()
     {
         // Arrange
         var user_id = 42;
 
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
-        {
-            SqlServerSql stmt = $"WHERE id = {user_id}";
-        });
+        // Act
+        SqlServerSql stmt = $"WHERE id = {user_id}";
+
+        // Assert
+        Assert.Equal("WHERE id = @p0", stmt.Sql);
     }
 
     [Fact]
-    public void WhenExpressionCollidesWithIndexedPlaceholder_Throws()
+    public void WhenExpressionCollidesWithIndexedPlaceholder_FallsBackToIndexed()
     {
         // Arrange
         var p3 = 42;
 
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
-        {
-            SqlServerSql stmt = $"WHERE id = {p3}";
-        });
+        // Act
+        SqlServerSql stmt = $"WHERE id = {p3}";
+
+        // Assert
+        Assert.Equal("WHERE id = @p0", stmt.Sql);
     }
 
     // --- InList ---

@@ -32,7 +32,7 @@ Member access uses underscores: `{user.Id}` becomes `@user_Id`.
 
 Falls back to `@p0`, `@p1` for inline literals and function calls.
 
-Variable names containing underscores (`user_id`) or matching the pattern `p{digits}` (`p3`) will throw at runtime to prevent naming collisions.
+Variable names containing underscores (`user_id`), matching the pattern `p{digits}` (`p3`), or containing non-ASCII characters will fall back to indexed naming (`@p0`).
 
 ## Fragments
 

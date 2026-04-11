@@ -5,6 +5,7 @@ namespace StringThing.SqlClient;
 public sealed class NamedParameterNamer : IParameterNamer
 {
     private static readonly Regex _indexedPlaceholderPattern = new(@"^p\d+$", RegexOptions.Compiled);
+    private static readonly Regex _validParameterName = new(@"^[a-zA-Z][a-zA-Z0-9_]*$", RegexOptions.Compiled);
 
     public static string WritePlaceholder(
         int parameterIndex,
@@ -13,17 +14,16 @@ public sealed class NamedParameterNamer : IParameterNamer
         if (capturedExpression is not null
             && capturedExpression.Length > 0
             && !capturedExpression.Contains('(')
-            && char.IsLetter(capturedExpression[0]))
+            && !capturedExpression.Contains('"')
+            && !capturedExpression.Contains('_'))
         {
-            if (capturedExpression.Contains('_'))
-                throw new InvalidOperationException(
-                    $"Parameter expression '{capturedExpression}' contains an underscore, which conflicts with dot-to-underscore name mapping. Use a variable name without underscores.");
+            var name = capturedExpression
+                .Replace(".", "_")
+                .Replace("[", "__")
+                .Replace("]", "");
 
-            if (_indexedPlaceholderPattern.IsMatch(capturedExpression))
-                throw new InvalidOperationException(
-                    $"Parameter expression '{capturedExpression}' matches the indexed placeholder pattern 'p{{digits}}', which conflicts with fallback parameter naming. Rename the variable.");
-
-            return $"@{capturedExpression.Replace('.', '_')}";
+            if (_validParameterName.IsMatch(name) && !_indexedPlaceholderPattern.IsMatch(name))
+                return $"@{name}";
         }
 
         return $"@p{parameterIndex}";
