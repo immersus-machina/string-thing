@@ -6,4 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="StringThing.Npgsql" />
+    <InternalsVisibleTo Include="StringThing.SqlClient" />
+    <InternalsVisibleTo Include="StringThing.Npgsql.Tests" />
+    <InternalsVisibleTo Include="StringThing.SqlClient.Tests" />
+  </ItemGroup>
+
 </Project>

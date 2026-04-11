@@ -2,10 +2,10 @@ using Microsoft.Data.SqlClient;
 
 namespace StringThing.SqlClient;
 
-public static class SqlStatementExtensions
+public static class SqlServerStatementExtensions
 {
     public static SqlCommand ToCommand(
-        this SqlStatement<NamedParameterNamer> statement,
+        this SqlServerStatement<NamedParameterNamer> statement,
         SqlConnection connection)
     {
         var command = new SqlCommand(statement.Sql, connection);
@@ -14,7 +14,7 @@ public static class SqlStatementExtensions
     }
 
     public static SqlCommand ToCommand(
-        this SqlStatement<IndexedParameterNamer> statement,
+        this SqlServerStatement<IndexedParameterNamer> statement,
         SqlConnection connection)
     {
         var command = new SqlCommand(statement.Sql, connection);
@@ -22,7 +22,7 @@ public static class SqlStatementExtensions
         return command;
     }
 
-    private static void AddParameters<TNamer>(SqlCommand command, SqlStatement<TNamer> statement)
+    private static void AddParameters<TNamer>(SqlCommand command, SqlServerStatement<TNamer> statement)
         where TNamer : IParameterNamer
     {
         var parameters = statement.Parameters;

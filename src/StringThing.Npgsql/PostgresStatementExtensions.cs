@@ -2,10 +2,10 @@ using Npgsql;
 
 namespace StringThing.Npgsql;
 
-public static class SqlStatementExtensions
+public static class PostgresStatementExtensions
 {
     public static NpgsqlCommand ToCommand(
-        this SqlStatement<PostgresParameterNamer> statement,
+        this PostgresStatement<PostgresParameterNamer> statement,
         NpgsqlConnection connection)
     {
         var command = new NpgsqlCommand(statement.Sql, connection);
@@ -18,7 +18,7 @@ public static class SqlStatementExtensions
     }
 
     public static NpgsqlCommand ToCommand(
-        this SqlStatement<PostgresParameterNamer> statement,
+        this PostgresStatement<PostgresParameterNamer> statement,
         NpgsqlDataSource dataSource)
     {
         var command = dataSource.CreateCommand(statement.Sql);

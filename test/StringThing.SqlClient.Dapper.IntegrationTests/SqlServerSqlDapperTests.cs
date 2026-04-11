@@ -171,7 +171,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
 
     private record InsertUser(int Id, string Name, string? Email) : ISqlServerRow
     {
-        public SqlFragment RowValues => $"({Id}, {Name}, {Email})";
+        public SqlServerFragment RowValues => $"({Id}, {Name}, {Email})";
     }
 
     [Fact]

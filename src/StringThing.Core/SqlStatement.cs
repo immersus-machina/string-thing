@@ -1,22 +1,22 @@
 using System.Runtime.CompilerServices;
 using System.Text;
-using Microsoft.Data.SqlClient;
 
-namespace StringThing.SqlClient;
+namespace StringThing;
 
-[InterpolatedStringHandler]
-public class SqlStatement<TNamer> where TNamer : IParameterNamer
+public abstract class SqlStatement<TNamer, TParameter>
+    where TNamer : IParameterNamer
+    where TParameter : class
 {
     private const int EstimatedCharsPerPlaceholder = 16;
 
     private readonly StringBuilder _sql;
-    private readonly List<SqlParameter> _parameters;
+    private readonly List<TParameter> _parameters;
     private readonly List<string?> _parameterNames;
 
     public SqlStatement(int literalLength, int formattedCount)
     {
         _sql = new StringBuilder(literalLength + (formattedCount * EstimatedCharsPerPlaceholder));
-        _parameters = new List<SqlParameter>(formattedCount);
+        _parameters = new List<TParameter>(formattedCount);
         _parameterNames = new List<string?>(formattedCount);
     }
 
@@ -27,27 +27,15 @@ public class SqlStatement<TNamer> where TNamer : IParameterNamer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AppendFormatted(SqlServerValue value,
-        [CallerArgumentExpression(nameof(value))] string? expression = null)
-        => AppendParameter(value.ToSqlParameter(), expression);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void AppendFormatted(SqlServerValue? value,
-        [CallerArgumentExpression(nameof(value))] string? expression = null)
-        => AppendParameter(
-            value.HasValue ? value.Value.ToSqlParameter() : new SqlParameter { Value = DBNull.Value },
-            expression);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AppendFormatted(UnsafeSql rawSqlFragment)
     {
         _sql.Append(rawSqlFragment.RawText);
     }
 
-    public void AppendFormatted(SqlFragment fragment,
+    public void AppendFormatted(SqlFragment<TParameter> fragment,
         [CallerArgumentExpression(nameof(fragment))] string? expression = null)
     {
-        var prefix = SqlFragment.ResolveNamePrefix(expression);
+        var prefix = SqlFragment<TParameter>.ResolveNamePrefix(expression);
         var allowCrossContextDedup = prefix is not null;
         var elements = fragment.Elements;
         for (var i = 0; i < elements.Count; i++)
@@ -59,19 +47,19 @@ public class SqlStatement<TNamer> where TNamer : IParameterNamer
             }
             else if (element.TryGetParameter(out var parameter, out var nestedExpression))
             {
-                var combinedName = SqlFragment.CombineNames(prefix, nestedExpression);
+                var combinedName = SqlFragment<TParameter>.CombineNames(prefix, nestedExpression);
                 AppendParameter(parameter, combinedName, allowCrossContextDedup);
             }
         }
     }
 
-    private void AppendParameter(SqlParameter parameter, string? expression, bool allowDeduplication = true)
+    protected void AppendParameter(TParameter parameter, string? expression, bool allowDeduplication = true)
     {
         var slotIndex = FindOrAddSlot(parameter, expression, allowDeduplication);
         _sql.Append(TNamer.WritePlaceholder(slotIndex, expression));
     }
 
-    private int FindOrAddSlot(SqlParameter parameter, string? expression, bool allowDeduplication)
+    private int FindOrAddSlot(TParameter parameter, string? expression, bool allowDeduplication)
     {
         if (allowDeduplication && expression is not null && !expression.Contains('('))
         {
@@ -89,7 +77,7 @@ public class SqlStatement<TNamer> where TNamer : IParameterNamer
 
     internal string Sql => _sql.ToString();
 
-    internal IReadOnlyList<SqlParameter> Parameters => _parameters;
+    internal IReadOnlyList<TParameter> Parameters => _parameters;
 
     internal IReadOnlyList<string?> ParameterNames => _parameterNames;
 }

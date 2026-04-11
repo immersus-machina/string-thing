@@ -1,8 +1,6 @@
-using Npgsql;
+namespace StringThing;
 
-namespace StringThing.Npgsql;
-
-internal readonly record struct SqlElement
+internal readonly record struct SqlElement<TParameter> where TParameter : class
 {
     public enum Tag : byte
     {
@@ -12,20 +10,20 @@ internal readonly record struct SqlElement
     }
 
     private readonly Tag _tag;
-    private readonly NpgsqlParameter? _parameter;
+    private readonly TParameter? _parameter;
     private readonly string? _referenceSlot;
 
-    private SqlElement(Tag tag, NpgsqlParameter? parameter, string? text)
+    private SqlElement(Tag tag, TParameter? parameter, string? text)
     {
         _tag = tag;
         _parameter = parameter;
         _referenceSlot = text;
     }
 
-    public static SqlElement Literal(string literalText) =>
+    public static SqlElement<TParameter> Literal(string literalText) =>
         new(Tag.Literal, null, literalText);
 
-    public static SqlElement Param(NpgsqlParameter parameter, string? capturedExpression) =>
+    public static SqlElement<TParameter> Param(TParameter parameter, string? capturedExpression) =>
         new(Tag.Parameter, parameter, capturedExpression);
 
     public Tag Kind => _tag;
@@ -41,7 +39,7 @@ internal readonly record struct SqlElement
         return false;
     }
 
-    public bool TryGetParameter(out NpgsqlParameter parameter, out string? capturedExpression)
+    public bool TryGetParameter(out TParameter parameter, out string? capturedExpression)
     {
         if (_tag == Tag.Parameter)
         {

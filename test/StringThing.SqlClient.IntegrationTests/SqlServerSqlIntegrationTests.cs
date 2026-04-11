@@ -163,7 +163,7 @@ public class SqlServerSqlIntegrationTests(SqlServerFixture sqlServer) : IClassFi
         await connection.OpenAsync(CancellationToken);
         var minId = 0;
         var active = true;
-        SqlFragment filter = $"id > {minId} AND active = {active}";
+        SqlServerFragment filter = $"id > {minId} AND active = {active}";
 
         var maxId = 3;
         SqlServerSql stmt = $"SELECT name FROM users WHERE {filter} AND id <= {maxId} ORDER BY id";
@@ -188,7 +188,7 @@ public class SqlServerSqlIntegrationTests(SqlServerFixture sqlServer) : IClassFi
         var userId = 1;
         var active = true;
 
-        SqlStatement<IndexedParameterNamer> stmt = $"SELECT name FROM users WHERE id = {userId} AND active = {active}";
+        SqlServerStatement<IndexedParameterNamer> stmt = $"SELECT name FROM users WHERE id = {userId} AND active = {active}";
         await using var command = stmt.ToCommand(connection);
 
         // Act

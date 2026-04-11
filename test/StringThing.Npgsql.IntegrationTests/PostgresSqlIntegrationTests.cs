@@ -158,7 +158,7 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         // Arrange
         var minId = 1;
         var status = "admin";
-        SqlFragment filter = $"id > {minId} AND tags @> ARRAY[{status}]";
+        PostgresFragment filter = $"id > {minId} AND tags @> ARRAY[{status}]";
 
         PostgresSql stmt = $"SELECT name FROM users WHERE {filter} ORDER BY id";
         await using var command = stmt.ToCommand(postgres.DataSource);
@@ -194,7 +194,7 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
 
     private record InsertUser(int Id, string Name, string? Email) : IPostgresRow
     {
-        public SqlFragment RowValues => $"({Id}, {Name}, {Email})";
+        public PostgresFragment RowValues => $"({Id}, {Name}, {Email})";
     }
 
     [Fact]

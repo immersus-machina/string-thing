@@ -3,7 +3,7 @@ using Xunit;
 
 namespace StringThing.SqlClient.Tests;
 
-public class SqlStatementTests
+public class SqlServerSqlTests
 {
     private static object?[] Values(IReadOnlyList<SqlParameter> parameters)
     {
@@ -17,7 +17,7 @@ public class SqlStatementTests
     public void WhenInterpolatingLiteralOnly_CapturesSqlAndProducesNoParameters()
     {
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"SELECT 1";
+        SqlServerSql stmt = $"SELECT 1";
 
         // Assert
         Assert.Equal("SELECT 1", stmt.Sql);
@@ -31,7 +31,7 @@ public class SqlStatementTests
         var userId = 42;
 
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM users WHERE id = {userId}";
+        SqlServerSql stmt = $"SELECT * FROM users WHERE id = {userId}";
 
         // Assert
         Assert.Equal("SELECT * FROM users WHERE id = @userId", stmt.Sql);
@@ -46,7 +46,7 @@ public class SqlStatementTests
         var user = new { Id = 42 };
 
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM users WHERE id = {user.Id}";
+        SqlServerSql stmt = $"SELECT * FROM users WHERE id = {user.Id}";
 
         // Assert
         Assert.Equal("SELECT * FROM users WHERE id = @user_Id", stmt.Sql);
@@ -59,7 +59,7 @@ public class SqlStatementTests
         var matchValue = 99;
 
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"WHERE a = {matchValue} OR b = {matchValue}";
+        SqlServerSql stmt = $"WHERE a = {matchValue} OR b = {matchValue}";
 
         // Assert
         Assert.Equal("WHERE a = @matchValue OR b = @matchValue", stmt.Sql);
@@ -74,7 +74,7 @@ public class SqlStatementTests
         var lastName = "smith";
 
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"WHERE first = {firstName} AND last = {lastName}";
+        SqlServerSql stmt = $"WHERE first = {firstName} AND last = {lastName}";
 
         // Assert
         Assert.Equal("WHERE first = @firstName AND last = @lastName", stmt.Sql);
@@ -85,7 +85,7 @@ public class SqlStatementTests
     public void WhenInterpolatingInlineLiteral_FallsBackToIndexedName()
     {
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM users WHERE id = {42}";
+        SqlServerSql stmt = $"SELECT * FROM users WHERE id = {42}";
 
         // Assert
         Assert.Equal("SELECT * FROM users WHERE id = @p0", stmt.Sql);
@@ -99,7 +99,7 @@ public class SqlStatementTests
         var userId = 1;
 
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
+        SqlServerSql stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
 
         // Assert
         Assert.Equal("SELECT * FROM users WHERE id = @userId", stmt.Sql);
@@ -115,7 +115,7 @@ public class SqlStatementTests
         var active = true;
 
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"WHERE name = {name} AND age = {age} AND active = {active}";
+        SqlServerSql stmt = $"WHERE name = {name} AND age = {age} AND active = {active}";
 
         // Assert
         Assert.Equal("WHERE name = @name AND age = @age AND active = @active", stmt.Sql);
@@ -130,7 +130,7 @@ public class SqlStatementTests
         string? email = null;
 
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"WHERE email = {email}";
+        SqlServerSql stmt = $"WHERE email = {email}";
 
         // Assert
         Assert.Equal("WHERE email = @email", stmt.Sql);
@@ -145,7 +145,7 @@ public class SqlStatementTests
         var name = "alice";
 
         // Act
-        SqlStatement<IndexedParameterNamer> stmt = $"WHERE id = {userId} AND name = {name}";
+        SqlServerStatement<IndexedParameterNamer> stmt = $"WHERE id = {userId} AND name = {name}";
 
         // Assert
         Assert.Equal("WHERE id = @p0 AND name = @p1", stmt.Sql);
@@ -157,10 +157,10 @@ public class SqlStatementTests
         // Arrange
         var minAge = 18;
         var status = "active";
-        SqlFragment filter = $"age >= {minAge} AND status = {status}";
+        SqlServerFragment filter = $"age >= {minAge} AND status = {status}";
 
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM users WHERE {filter}";
+        SqlServerSql stmt = $"SELECT * FROM users WHERE {filter}";
 
         // Assert
         Assert.Contains("@filter_minAge", stmt.Sql);
@@ -173,11 +173,11 @@ public class SqlStatementTests
     {
         // Arrange
         var minAge = 18;
-        SqlFragment filter = $"age >= {minAge}";
+        SqlServerFragment filter = $"age >= {minAge}";
         minAge = 99;
 
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"SELECT * FROM users WHERE {filter} OR age >= {minAge}";
+        SqlServerSql stmt = $"SELECT * FROM users WHERE {filter} OR age >= {minAge}";
 
         // Assert
         Assert.Equal(18, stmt.Parameters[0].Value);
@@ -191,7 +191,7 @@ public class SqlStatementTests
         var value = 42;
 
         // Act
-        SqlStatement<NamedParameterNamer> stmt = $"WHERE true OR{value}";
+        SqlServerSql stmt = $"WHERE true OR{value}";
 
         // Assert
         Assert.Equal("WHERE true OR@value", stmt.Sql);
@@ -206,7 +206,7 @@ public class SqlStatementTests
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() =>
         {
-            SqlStatement<NamedParameterNamer> stmt = $"WHERE id = {user_id}";
+            SqlServerSql stmt = $"WHERE id = {user_id}";
         });
     }
 
@@ -219,7 +219,55 @@ public class SqlStatementTests
         // Act & Assert
         Assert.Throws<InvalidOperationException>(() =>
         {
-            SqlStatement<NamedParameterNamer> stmt = $"WHERE id = {p3}";
+            SqlServerSql stmt = $"WHERE id = {p3}";
         });
+    }
+
+    // --- InList ---
+
+    [Fact]
+    public void InList_WhenCalledWithIntArray_ProducesParenthesizedList()
+    {
+        // Act
+        SqlServerSql stmt = $"WHERE id IN {SqlServerSql.InList([1, 2, 3])}";
+
+        // Assert
+        Assert.Equal("WHERE id IN (@p0, @p1, @p2)", stmt.Sql);
+        object[] expectedParameters = [1, 2, 3];
+        Assert.Equal(expectedParameters, Values(stmt.Parameters));
+    }
+
+    [Fact]
+    public void InList_WhenCalledWithStringArray_ProducesParenthesizedList()
+    {
+        // Act
+        SqlServerSql stmt = $"WHERE name IN {SqlServerSql.InList(["alice", "bob"])}";
+
+        // Assert
+        Assert.Equal("WHERE name IN (@p0, @p1)", stmt.Sql);
+        object[] expectedParameters = ["alice", "bob"];
+        Assert.Equal(expectedParameters, Values(stmt.Parameters));
+    }
+
+    [Fact]
+    public void InList_WhenCalledWithSpreadList_Works()
+    {
+        // Arrange
+        var ids = new List<int> { 10, 20, 30 };
+
+        // Act
+        SqlServerSql stmt = $"WHERE id IN {SqlServerSql.InList([.. ids])}";
+
+        // Assert
+        Assert.Equal("WHERE id IN (@p0, @p1, @p2)", stmt.Sql);
+        object[] expectedParameters = [10, 20, 30];
+        Assert.Equal(expectedParameters, Values(stmt.Parameters));
+    }
+
+    [Fact]
+    public void InList_WhenEmpty_Throws()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => SqlServerSql.InList([]));
     }
 }

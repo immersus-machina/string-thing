@@ -9,5 +9,5 @@ public interface ISqlServerRow
     /// Returns the row values as a parenthesized, comma-separated SQL fragment.
     /// Example: <c>$"({Id}, {Name}, {Email})"</c>
     /// </summary>
-    SqlFragment RowValues { get; }
+    SqlServerFragment RowValues { get; }
 }

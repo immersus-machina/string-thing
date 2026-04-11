@@ -8,7 +8,7 @@ using Xunit;
 
 namespace StringThing.Npgsql.Tests;
 
-public class SqlStatementTests
+public class PostgresSqlTests
 {
     private static object?[] Values(IReadOnlyList<NpgsqlParameter> parameters)
     {
@@ -25,7 +25,7 @@ public class SqlStatementTests
     public void WhenInterpolatingLiteralOnly_CapturesSqlAndProducesNoParameters()
     {
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT 1";
+        PostgresSql stmt = $"SELECT 1";
 
         // Assert
         Assert.Equal("SELECT 1", stmt.Sql);
@@ -39,7 +39,7 @@ public class SqlStatementTests
         var userId = 42;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users WHERE id = {userId}";
+        PostgresSql stmt = $"SELECT * FROM users WHERE id = {userId}";
 
         // Assert
         object[] expectedParameters = [42];
@@ -54,7 +54,7 @@ public class SqlStatementTests
         var value = 42;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE true OR{value}";
+        PostgresSql stmt = $"WHERE true OR{value}";
 
         // Assert
         Assert.Equal("WHERE true OR$1", stmt.Sql);
@@ -67,7 +67,7 @@ public class SqlStatementTests
         var name = "alice";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users WHERE name = {name}";
+        PostgresSql stmt = $"SELECT * FROM users WHERE name = {name}";
 
         // Assert
         object[] expectedParameters = ["alice"];
@@ -84,7 +84,7 @@ public class SqlStatementTests
         var third = 3;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"a={first}, b={second}, c={third}";
+        PostgresSql stmt = $"a={first}, b={second}, c={third}";
 
         // Assert
         object[] expectedParameters = [1, 2, 3];
@@ -101,7 +101,7 @@ public class SqlStatementTests
         var age = 30;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE id={userId} AND name={name} AND age={age}";
+        PostgresSql stmt = $"WHERE id={userId} AND name={name} AND age={age}";
 
         // Assert
         object[] expectedParameters = [7, "bob", 30];
@@ -116,7 +116,7 @@ public class SqlStatementTests
         var matchValue = 99;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"a={matchValue} OR b={matchValue}";
+        PostgresSql stmt = $"a={matchValue} OR b={matchValue}";
 
         // Assert
         object[] expectedParameters = [99];
@@ -131,7 +131,7 @@ public class SqlStatementTests
         var searchTerm = "alice";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"WHERE myOption.name = {searchTerm} OR yourOption.name = {searchTerm}";
 
         // Assert
@@ -148,7 +148,7 @@ public class SqlStatementTests
         var secondUserId = 99;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"a={firstUserId} OR b={secondUserId}";
+        PostgresSql stmt = $"a={firstUserId} OR b={secondUserId}";
 
         // Assert
         object[] expectedParameters = [99, 99];
@@ -160,7 +160,7 @@ public class SqlStatementTests
     public void WhenInterpolatingTwelveParameters_UsesTwoCharacterPlaceholdersForTenAndAbove()
     {
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}";
 
         // Assert
@@ -189,7 +189,7 @@ public class SqlStatementTests
         byte[] byteArrayValue = [0x01, 0x02, 0x03];
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"{boolValue},{shortValue},{intValue},{longValue},{floatValue},{doubleValue},{decimalValue},{guidValue},{dateTimeValue},{dateTimeOffsetValue},{dateOnlyValue},{timeOnlyValue},{stringValue},{byteArrayValue}";
 
         // Assert
@@ -221,7 +221,7 @@ public class SqlStatementTests
         var localDateTime = new DateTime(2026, 4, 7, 12, 0, 0, DateTimeKind.Local);
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"{utcDateTime},{unspecifiedDateTime},{localDateTime}";
 
         // Assert
@@ -237,7 +237,7 @@ public class SqlStatementTests
         byte[] payload = [0x01, 0x02, 0x03, 0x04];
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"{payload}";
+        PostgresSql stmt = $"{payload}";
 
         // Assert
         Assert.Same(payload, TypedValue<byte[]>(stmt.Parameters[0]));
@@ -250,7 +250,7 @@ public class SqlStatementTests
         var userId = 42;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"SELECT * FROM users WHERE id = {userId}";
 
         // Assert
@@ -267,7 +267,7 @@ public class SqlStatementTests
         var orderStatus = "shipped";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"WHERE customer_id = {customerId} AND total >= {minOrderAmount} AND status = {orderStatus}";
 
         // Assert
@@ -282,7 +282,7 @@ public class SqlStatementTests
         var orderByClause = Sql.Unsafe("ORDER BY created_at DESC");
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"SELECT * FROM users {orderByClause}";
 
         // Assert
@@ -298,7 +298,7 @@ public class SqlStatementTests
         var userId = 42;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"SELECT * FROM {tableName} WHERE id = {userId}";
 
         // Assert
@@ -314,7 +314,7 @@ public class SqlStatementTests
         var longRawFragment = Sql.Unsafe(new string('x', 500));
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"{longRawFragment}";
+        PostgresSql stmt = $"{longRawFragment}";
 
         // Assert
         Assert.Equal(new string('x', 500), stmt.Sql);
@@ -338,7 +338,7 @@ public class SqlStatementTests
         var namePrefix = "a";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"{activeOnlyCte} SELECT * FROM active_users WHERE created_at >= {minCreatedAt} AND name LIKE {namePrefix}";
 
         // Assert
@@ -358,7 +358,7 @@ public class SqlStatementTests
     public void WhenSameFunctionCallInterpolatedTwice_DoesNotDeduplicate()
     {
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"a={GetValue()} OR b={GetValue()}";
+        PostgresSql stmt = $"a={GetValue()} OR b={GetValue()}";
 
         // Assert
         object[] expectedParameters = [1, 2];
@@ -372,30 +372,14 @@ public class SqlStatementTests
     // --- Fragment splicing tests ---
 
     [Fact]
-    public void WhenSplicingFragmentWithSingleParameter_PrefixesParameterNameWithFragmentVariable()
-    {
-        // Arrange
-        var userId = 42;
-        SqlFragment where = $"WHERE users.id = {userId}";
-
-        // Act
-        SqlStatement<NameCapturingParameterNamer> stmt = $"SELECT * FROM users {where}";
-
-        // Assert
-        object[] expectedParameters = [42];
-        Assert.Equal("SELECT * FROM users WHERE users.id = @where_userId", stmt.Sql);
-        Assert.Equal(expectedParameters, Values(stmt.Parameters));
-    }
-
-    [Fact]
     public void WhenSplicingFragmentUnderPostgresNamer_StillNumbersWithDollarPlaceholders()
     {
         // Arrange
         var userId = 42;
-        SqlFragment where = $"WHERE users.id = {userId}";
+        PostgresFragment where = $"WHERE users.id = {userId}";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users {where}";
+        PostgresSql stmt = $"SELECT * FROM users {where}";
 
         // Assert
         object[] expectedParameters = [42];
@@ -408,11 +392,11 @@ public class SqlStatementTests
     {
         // Arrange
         var userId = 42;
-        SqlFragment filter =
+        PostgresFragment filter =
             $"WHERE owner_id = {userId} OR creator_id = {userId}";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM rows {filter}";
+        PostgresSql stmt = $"SELECT * FROM rows {filter}";
 
         // Assert
         object[] expectedParameters = [42];
@@ -426,11 +410,11 @@ public class SqlStatementTests
         // Arrange
         var userId = 42;
         var ownerId = 7;
-        SqlFragment first = $"id = {userId}";
-        SqlFragment second = $"id = {ownerId}";
+        PostgresFragment first = $"id = {userId}";
+        PostgresFragment second = $"id = {ownerId}";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"SELECT * FROM rows WHERE {first} OR {second}";
 
         // Assert
@@ -444,10 +428,10 @@ public class SqlStatementTests
     {
         // Arrange
         var userId = 42;
-        SqlFragment filter = $"id = {userId}";
+        PostgresFragment filter = $"id = {userId}";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"SELECT * FROM rows WHERE {filter} OR exists ({filter})";
 
         // Assert
@@ -462,7 +446,7 @@ public class SqlStatementTests
     public void WhenFragmentReturnedFromHelperMethod_DropsPrefixDueToFunctionCallExpression()
     {
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"SELECT * FROM rows WHERE {WhereId(42)} AND {WhereId(99)}";
 
         // Assert
@@ -471,15 +455,15 @@ public class SqlStatementTests
         Assert.Equal(expectedParameters, Values(stmt.Parameters));
     }
 
-    private static SqlFragment WhereId(int id) => $"id = {id}";
+    private static PostgresFragment WhereId(int id) => $"id = {id}";
 
-    private static SqlFragment OwnerOrCreatorIs(int id) => $"owner = {id} OR creator = {id}";
+    private static PostgresFragment OwnerOrCreatorIs(int id) => $"owner = {id} OR creator = {id}";
 
     [Fact]
     public void WhenSplicingTwoInlineHelperCallsWithInternalDuplication_ProducesFourDistinctSlots()
     {
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"SELECT * FROM rows WHERE {OwnerOrCreatorIs(1)} OR {OwnerOrCreatorIs(2)}";
 
         // Assert
@@ -498,7 +482,7 @@ public class SqlStatementTests
         var secondFilter = OwnerOrCreatorIs(2);
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"SELECT * FROM rows WHERE {firstFilter} OR {secondFilter}";
 
         // Assert
@@ -510,33 +494,16 @@ public class SqlStatementTests
     }
 
     [Fact]
-    public void WhenSplicingNestedFragments_ChainsPrefixesAcrossLevels()
-    {
-        // Arrange
-        var userId = 42;
-        SqlFragment inner = $"id = {userId}";
-        SqlFragment outer = $"WHERE {inner}";
-
-        // Act
-        SqlStatement<NameCapturingParameterNamer> stmt = $"SELECT * FROM rows {outer}";
-
-        // Assert
-        object[] expectedParameters = [42];
-        Assert.Equal("SELECT * FROM rows WHERE id = @outer_inner_userId", stmt.Sql);
-        Assert.Equal(expectedParameters, Values(stmt.Parameters));
-    }
-
-    [Fact]
     public void WhenSplicingFragmentWithMultipleParameters_FlowsAllValuesAndLiteralsThroughInOrder()
     {
         // Arrange
         var minAge = 18;
         var status = "active";
         var minCreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        SqlFragment filter = $"age >= {minAge} AND status = {status} AND created_at >= {minCreatedAt}";
+        PostgresFragment filter = $"age >= {minAge} AND status = {status} AND created_at >= {minCreatedAt}";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users WHERE {filter}";
+        PostgresSql stmt = $"SELECT * FROM users WHERE {filter}";
 
         // Assert
         Assert.Equal(
@@ -553,10 +520,10 @@ public class SqlStatementTests
         // Arrange
         var tableName = Sql.Unsafe("users");
         var userId = 42;
-        SqlFragment filter = $"SELECT * FROM {tableName} WHERE id = {userId}";
+        PostgresFragment filter = $"SELECT * FROM {tableName} WHERE id = {userId}";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"{filter}";
+        PostgresSql stmt = $"{filter}";
 
         // Assert
         object[] expectedParameters = [42];
@@ -569,10 +536,10 @@ public class SqlStatementTests
     {
         // Arrange
         var orderBy = Sql.Unsafe("ORDER BY created_at DESC");
-        SqlFragment fragment = $"{orderBy}";
+        PostgresFragment fragment = $"{orderBy}";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users {fragment}";
+        PostgresSql stmt = $"SELECT * FROM users {fragment}";
 
         // Assert
         Assert.Equal("SELECT * FROM users ORDER BY created_at DESC", stmt.Sql);
@@ -585,11 +552,11 @@ public class SqlStatementTests
         // Arrange
         var userId = 42;
         var tableName = Sql.Unsafe("users");
-        SqlFragment inner = $"id = {userId}";
-        SqlFragment outer = $"SELECT * FROM {tableName} WHERE {inner}";
+        PostgresFragment inner = $"id = {userId}";
+        PostgresFragment outer = $"SELECT * FROM {tableName} WHERE {inner}";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"{outer}";
+        PostgresSql stmt = $"{outer}";
 
         // Assert
         object[] expectedParameters = [42];
@@ -606,7 +573,7 @@ public class SqlStatementTests
         var empty = "";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE name = {empty}";
+        PostgresSql stmt = $"WHERE name = {empty}";
 
         // Assert
         Assert.Equal("WHERE name = $1", stmt.Sql);
@@ -620,7 +587,7 @@ public class SqlStatementTests
         byte[] empty = [];
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE data = {empty}";
+        PostgresSql stmt = $"WHERE data = {empty}";
 
         // Assert
         Assert.Equal("WHERE data = $1", stmt.Sql);
@@ -634,7 +601,7 @@ public class SqlStatementTests
         var empty = Sql.Unsafe("");
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT 1{empty}";
+        PostgresSql stmt = $"SELECT 1{empty}";
 
         // Assert
         Assert.Equal("SELECT 1", stmt.Sql);
@@ -647,10 +614,10 @@ public class SqlStatementTests
         // Arrange
         var tableName = Sql.Unsafe("orders");
         var minAmount = 100m;
-        SqlFragment statusFilter = $"status = {"shipped"}";
+        PostgresFragment statusFilter = $"status = {"shipped"}";
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt =
+        PostgresSql stmt =
             $"SELECT * FROM {tableName} WHERE amount > {minAmount} AND {statusFilter}";
 
         // Assert
@@ -670,7 +637,7 @@ public class SqlStatementTests
         var duration = TimeSpan.FromHours(36);
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE elapsed > {duration}";
+        PostgresSql stmt = $"WHERE elapsed > {duration}";
 
         // Assert
         Assert.Equal("WHERE elapsed > $1", stmt.Sql);
@@ -684,7 +651,7 @@ public class SqlStatementTests
         var ip = IPAddress.Parse("192.168.1.1");
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE client_ip = {ip}";
+        PostgresSql stmt = $"WHERE client_ip = {ip}";
 
         // Assert
         Assert.Equal("WHERE client_ip = $1", stmt.Sql);
@@ -698,7 +665,7 @@ public class SqlStatementTests
         var mac = PhysicalAddress.Parse("00-11-22-33-44-55");
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE mac_addr = {mac}";
+        PostgresSql stmt = $"WHERE mac_addr = {mac}";
 
         // Assert
         Assert.Equal("WHERE mac_addr = $1", stmt.Sql);
@@ -712,7 +679,7 @@ public class SqlStatementTests
         var big = BigInteger.Parse("99999999999999999999");
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE amount = {big}";
+        PostgresSql stmt = $"WHERE amount = {big}";
 
         // Assert
         Assert.Equal("WHERE amount = $1", stmt.Sql);
@@ -726,7 +693,7 @@ public class SqlStatementTests
         var letter = 'A';
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE grade = {letter}";
+        PostgresSql stmt = $"WHERE grade = {letter}";
 
         // Assert
         Assert.Equal("WHERE grade = $1", stmt.Sql);
@@ -740,7 +707,7 @@ public class SqlStatementTests
         var bits = new BitArray([true, false, true]);
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE flags = {bits}";
+        PostgresSql stmt = $"WHERE flags = {bits}";
 
         // Assert
         Assert.Equal("WHERE flags = $1", stmt.Sql);
@@ -756,7 +723,7 @@ public class SqlStatementTests
         int? userId = 42;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE id = {userId}";
+        PostgresSql stmt = $"WHERE id = {userId}";
 
         // Assert
         Assert.Equal("WHERE id = $1", stmt.Sql);
@@ -770,7 +737,7 @@ public class SqlStatementTests
         int? userId = null;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE id = {userId}";
+        PostgresSql stmt = $"WHERE id = {userId}";
 
         // Assert
         Assert.Equal("WHERE id = $1", stmt.Sql);
@@ -784,7 +751,7 @@ public class SqlStatementTests
         TimeSpan? duration = null;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE elapsed > {duration}";
+        PostgresSql stmt = $"WHERE elapsed > {duration}";
 
         // Assert
         Assert.Equal("WHERE elapsed > $1", stmt.Sql);
@@ -800,7 +767,7 @@ public class SqlStatementTests
         var ids = new[] { 1, 2, 3 };
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE id = ANY({ids})";
+        PostgresSql stmt = $"WHERE id = ANY({ids})";
 
         // Assert
         int[] expectedParameters = [1, 2, 3];
@@ -815,7 +782,7 @@ public class SqlStatementTests
         string[] tags = ["a", "b", "c"];
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE tags @> {tags}";
+        PostgresSql stmt = $"WHERE tags @> {tags}";
 
         // Assert
         string[] expectedParameters = ["a", "b", "c"];
@@ -830,7 +797,7 @@ public class SqlStatementTests
         IPAddress[] ips = [IPAddress.Loopback, IPAddress.IPv6Loopback];
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE ip = ANY({ips})";
+        PostgresSql stmt = $"WHERE ip = ANY({ips})";
 
         // Assert
         Assert.Equal("WHERE ip = ANY($1)", stmt.Sql);
@@ -848,7 +815,7 @@ public class SqlStatementTests
         var point = new NpgsqlPoint(1.5, 2.5);
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE location = {point}";
+        PostgresSql stmt = $"WHERE location = {point}";
 
         // Assert
         Assert.Equal("WHERE location = $1", stmt.Sql);
@@ -862,7 +829,7 @@ public class SqlStatementTests
         var range = new NpgsqlRange<int>(1, 10);
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE val <@ {range}";
+        PostgresSql stmt = $"WHERE val <@ {range}";
 
         // Assert
         Assert.Equal("WHERE val <@ $1", stmt.Sql);
@@ -878,7 +845,7 @@ public class SqlStatementTests
         var range = new NpgsqlRange<DateOnly>(checkIn, checkOut);
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE stay && {range}";
+        PostgresSql stmt = $"WHERE stay && {range}";
 
         // Assert
         Assert.Equal("WHERE stay && $1", stmt.Sql);
@@ -892,7 +859,7 @@ public class SqlStatementTests
         var point = new NpgsqlPoint(1, 2);
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE a = {point} OR b = {point}";
+        PostgresSql stmt = $"WHERE a = {point} OR b = {point}";
 
         // Assert
         Assert.Equal("WHERE a = $1 OR b = $1", stmt.Sql);
@@ -906,11 +873,11 @@ public class SqlStatementTests
     {
         // Arrange
         var minAge = 18;
-        SqlFragment filter = $"age >= {minAge}";
+        PostgresFragment filter = $"age >= {minAge}";
         minAge = 99;
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM users WHERE {filter} OR age >= {minAge}";
+        PostgresSql stmt = $"SELECT * FROM users WHERE {filter} OR age >= {minAge}";
 
         // Assert
         Assert.Equal(18, stmt.Parameters[0].Value);
@@ -928,7 +895,7 @@ public class SqlStatementTests
         // ...
         // Level 199: "p0 = $1 AND p1 = $2 AND ... AND p199 = $200"
         const int depth = 200;
-        SqlFragment current = $"{Sql.Unsafe("p0")} = {0}";
+        PostgresFragment current = $"{Sql.Unsafe("p0")} = {0}";
         for (var i = 1; i < depth; i++)
         {
             var columnName = Sql.Unsafe($"p{i}");
@@ -938,7 +905,7 @@ public class SqlStatementTests
         }
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"WHERE {current}";
+        PostgresSql stmt = $"WHERE {current}";
 
         // Assert
         Assert.Equal(depth, stmt.Parameters.Count);
@@ -955,7 +922,7 @@ public class SqlStatementTests
     {
         // Arrange
         const int depth = 100;
-        SqlFragment current = $"{Sql.Unsafe("col0")} = {0}";
+        PostgresFragment current = $"{Sql.Unsafe("col0")} = {0}";
         for (var i = 1; i < depth; i++)
         {
             var columnName = Sql.Unsafe($"col{i}");
@@ -965,7 +932,7 @@ public class SqlStatementTests
         }
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT * FROM t WHERE {current}";
+        PostgresSql stmt = $"SELECT * FROM t WHERE {current}";
 
         // Assert
         var sql = stmt.Sql;
@@ -983,7 +950,7 @@ public class SqlStatementTests
         var b = 1;
         var c = 2;
         var d = 3;
-        SqlFragment current = $"({a},{b},{c},{d})";
+        PostgresFragment current = $"({a},{b},{c},{d})";
         for (var i = 1; i < depth; i++)
         {
             a = i * 4;
@@ -995,7 +962,7 @@ public class SqlStatementTests
         }
 
         // Act
-        SqlStatement<PostgresParameterNamer> stmt = $"SELECT {current}";
+        PostgresSql stmt = $"SELECT {current}";
 
         // Assert
         Assert.Equal(depth * 4, stmt.Parameters.Count);
@@ -1007,7 +974,7 @@ public class SqlStatementTests
 
     private record TestRow(int Id, string Name) : IPostgresRow
     {
-        public SqlFragment RowValues => $"({Id}, {Name})";
+        public PostgresFragment RowValues => $"({Id}, {Name})";
     }
 
     [Fact]
