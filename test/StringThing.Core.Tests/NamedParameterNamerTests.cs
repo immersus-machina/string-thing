@@ -1,4 +1,3 @@
-using StringThing.Core;
 using Xunit;
 
 namespace StringThing.Core.Tests;

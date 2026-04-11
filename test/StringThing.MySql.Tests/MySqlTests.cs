@@ -1,5 +1,4 @@
 using MySqlConnector;
-using StringThing.Core;
 using StringThing.UnsafeSql;
 using Xunit;
 

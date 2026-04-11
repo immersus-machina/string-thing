@@ -6,6 +6,7 @@
     <Project Path="src/StringThing.SqlClient/StringThing.SqlClient.csproj" />
     <Project Path="src/StringThing.SqlClient.Dapper/StringThing.SqlClient.Dapper.csproj" />
     <Project Path="src/StringThing.MySql/StringThing.MySql.csproj" />
+    <Project Path="src/StringThing.MySql.Dapper/StringThing.MySql.Dapper.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/StringThing.Core.Tests/StringThing.Core.Tests.csproj" />
@@ -17,5 +18,6 @@
     <Project Path="test/StringThing.SqlClient.Dapper.IntegrationTests/StringThing.SqlClient.Dapper.IntegrationTests.csproj" />
     <Project Path="test/StringThing.MySql.Tests/StringThing.MySql.Tests.csproj" />
     <Project Path="test/StringThing.MySql.IntegrationTests/StringThing.MySql.IntegrationTests.csproj" />
+    <Project Path="test/StringThing.MySql.Dapper.IntegrationTests/StringThing.MySql.Dapper.IntegrationTests.csproj" />
   </Folder>
 </Solution>

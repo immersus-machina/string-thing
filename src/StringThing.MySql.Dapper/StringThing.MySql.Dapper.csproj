@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper"
+        Version="2.1.72"
+        PrivateAssets="compile;contentFiles;native;analyzers"
+        Condition="'$(NuGetPack)' != 'true'" />
+    <PackageReference Include="Dapper"
+        Version="2.1.72"
+        PrivateAssets="all"
+        Condition="'$(NuGetPack)' == 'true'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StringThing.MySql\StringThing.MySql.csproj" />
+  </ItemGroup>
+
+  <Target Name="IncludeInternalDependencies" BeforeTargets="_GetPackageFiles" Condition="'$(NuGetPack)' == 'true'">
+    <ItemGroup>
+      <None Include="$(OutputPath)Dapper.dll" Pack="true" PackagePath="lib/$(TargetFramework)" />
+    </ItemGroup>
+  </Target>
+
+</Project>
