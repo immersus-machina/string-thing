@@ -9,7 +9,7 @@ public static class SqlServerSqlDapperExtensions
 {
     // --- Query<T> ---
 
-    public static IEnumerable<T> Query<T>(
+    public static IEnumerable<T> QueryString<T>(
         this SqlConnection connection,
         SqlServerSql statement)
     {
@@ -18,7 +18,7 @@ public static class SqlServerSqlDapperExtensions
         return reader.Parse<T>().ToList();
     }
 
-    public static async Task<IEnumerable<T>> QueryAsync<T>(
+    public static async Task<IEnumerable<T>> QueryStringAsync<T>(
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
@@ -30,7 +30,7 @@ public static class SqlServerSqlDapperExtensions
 
     // --- QueryFirst<T> ---
 
-    public static T QueryFirst<T>(
+    public static T QueryStringFirst<T>(
         this SqlConnection connection,
         SqlServerSql statement)
     {
@@ -39,7 +39,7 @@ public static class SqlServerSqlDapperExtensions
         return reader.Parse<T>().First();
     }
 
-    public static async Task<T> QueryFirstAsync<T>(
+    public static async Task<T> QueryStringFirstAsync<T>(
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
@@ -51,7 +51,7 @@ public static class SqlServerSqlDapperExtensions
 
     // --- QueryFirstOrDefault<T> ---
 
-    public static T? QueryFirstOrDefault<T>(
+    public static T? QueryStringFirstOrDefault<T>(
         this SqlConnection connection,
         SqlServerSql statement)
     {
@@ -60,7 +60,7 @@ public static class SqlServerSqlDapperExtensions
         return reader.Parse<T>().FirstOrDefault();
     }
 
-    public static async Task<T?> QueryFirstOrDefaultAsync<T>(
+    public static async Task<T?> QueryStringFirstOrDefaultAsync<T>(
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
@@ -72,7 +72,7 @@ public static class SqlServerSqlDapperExtensions
 
     // --- QuerySingle<T> ---
 
-    public static T QuerySingle<T>(
+    public static T QueryStringSingle<T>(
         this SqlConnection connection,
         SqlServerSql statement)
     {
@@ -81,7 +81,7 @@ public static class SqlServerSqlDapperExtensions
         return reader.Parse<T>().Single();
     }
 
-    public static async Task<T> QuerySingleAsync<T>(
+    public static async Task<T> QueryStringSingleAsync<T>(
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
@@ -93,7 +93,7 @@ public static class SqlServerSqlDapperExtensions
 
     // --- QuerySingleOrDefault<T> ---
 
-    public static T? QuerySingleOrDefault<T>(
+    public static T? QueryStringSingleOrDefault<T>(
         this SqlConnection connection,
         SqlServerSql statement)
     {
@@ -102,7 +102,7 @@ public static class SqlServerSqlDapperExtensions
         return reader.Parse<T>().SingleOrDefault();
     }
 
-    public static async Task<T?> QuerySingleOrDefaultAsync<T>(
+    public static async Task<T?> QueryStringSingleOrDefaultAsync<T>(
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
@@ -114,7 +114,7 @@ public static class SqlServerSqlDapperExtensions
 
     // --- Execute ---
 
-    public static int Execute(
+    public static int ExecuteString(
         this SqlConnection connection,
         SqlServerSql statement)
     {
@@ -122,7 +122,7 @@ public static class SqlServerSqlDapperExtensions
         return command.ExecuteNonQuery();
     }
 
-    public static async Task<int> ExecuteAsync(
+    public static async Task<int> ExecuteStringAsync(
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
@@ -133,7 +133,7 @@ public static class SqlServerSqlDapperExtensions
 
     // --- ExecuteScalar ---
 
-    public static object? ExecuteScalar(
+    public static object? ExecuteStringScalar(
         this SqlConnection connection,
         SqlServerSql statement)
     {
@@ -141,7 +141,7 @@ public static class SqlServerSqlDapperExtensions
         return command.ExecuteScalar();
     }
 
-    public static T? ExecuteScalar<T>(
+    public static T? ExecuteStringScalar<T>(
         this SqlConnection connection,
         SqlServerSql statement)
     {
@@ -150,7 +150,7 @@ public static class SqlServerSqlDapperExtensions
         return result is DBNull or null ? default : (T)Convert.ChangeType(result, typeof(T));
     }
 
-    public static async Task<object?> ExecuteScalarAsync(
+    public static async Task<object?> ExecuteStringScalarAsync(
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
@@ -159,7 +159,7 @@ public static class SqlServerSqlDapperExtensions
         return await command.ExecuteScalarAsync(cancellationToken);
     }
 
-    public static async Task<T?> ExecuteScalarAsync<T>(
+    public static async Task<T?> ExecuteStringScalarAsync<T>(
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
@@ -171,7 +171,7 @@ public static class SqlServerSqlDapperExtensions
 
     // --- ExecuteReader ---
 
-    public static IDataReader ExecuteReader(
+    public static IDataReader ExecuteStringReader(
         this SqlConnection connection,
         SqlServerSql statement)
     {
@@ -179,7 +179,7 @@ public static class SqlServerSqlDapperExtensions
         return command.ExecuteReader(CommandBehavior.CloseConnection);
     }
 
-    public static async Task<DbDataReader> ExecuteReaderAsync(
+    public static async Task<DbDataReader> ExecuteStringReaderAsync(
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)

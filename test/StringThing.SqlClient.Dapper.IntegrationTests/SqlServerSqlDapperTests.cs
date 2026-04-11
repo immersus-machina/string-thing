@@ -15,7 +15,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
         await using var connection = new SqlConnection(sqlServer.ConnectionString);
         await connection.OpenAsync(CancellationToken);
 
-        await connection.ExecuteAsync(
+        await connection.ExecuteStringAsync(
             $"""
             IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'dapper_users')
             CREATE TABLE dapper_users (
@@ -38,7 +38,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
             """,
             CancellationToken);
 
-        await connection.ExecuteAsync(
+        await connection.ExecuteStringAsync(
             $"""
             IF NOT EXISTS (SELECT 1 FROM dapper_users WHERE id = 1)
             BEGIN
@@ -54,7 +54,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
     private record User(int Id, string Name, string? Email);
 
     [Fact]
-    public async Task QuerySingleAsync_ReturnsMappedObject()
+    public async Task QueryStringSingleAsync_ReturnsMappedObject()
     {
         // Arrange
         await using var connection = new SqlConnection(sqlServer.ConnectionString);
@@ -62,7 +62,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
         var userId = 1;
 
         // Act
-        var user = await connection.QuerySingleAsync<User>(
+        var user = await connection.QueryStringSingleAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id = {userId}",
             CancellationToken);
 
@@ -72,7 +72,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
     }
 
     [Fact]
-    public async Task QueryAsync_ReturnsMultipleMappedObjects()
+    public async Task QueryStringAsync_ReturnsMultipleMappedObjects()
     {
         // Arrange
         await using var connection = new SqlConnection(sqlServer.ConnectionString);
@@ -80,7 +80,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
         var maxId = 3;
 
         // Act
-        var users = (await connection.QueryAsync<User>(
+        var users = (await connection.QueryStringAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id <= {maxId} ORDER BY id",
             CancellationToken)).ToList();
 
@@ -92,7 +92,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
     }
 
     [Fact]
-    public async Task QuerySingleOrDefaultAsync_WithNoMatch_ReturnsNull()
+    public async Task QueryStringSingleOrDefaultAsync_WithNoMatch_ReturnsNull()
     {
         // Arrange
         await using var connection = new SqlConnection(sqlServer.ConnectionString);
@@ -100,7 +100,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
         var userId = 999;
 
         // Act
-        var user = await connection.QuerySingleOrDefaultAsync<User>(
+        var user = await connection.QueryStringSingleOrDefaultAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id = {userId}",
             CancellationToken);
 
@@ -109,7 +109,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
     }
 
     [Fact]
-    public async Task ExecuteScalarAsync_ReturnsValue()
+    public async Task ExecuteStringScalarAsync_ReturnsValue()
     {
         // Arrange
         await using var connection = new SqlConnection(sqlServer.ConnectionString);
@@ -117,7 +117,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
 
         // Act
         var maxId = 3;
-        var count = await connection.ExecuteScalarAsync<int>(
+        var count = await connection.ExecuteStringScalarAsync<int>(
             $"SELECT {Sql.Unsafe("COUNT(*)")} FROM dapper_users WHERE email IS NOT NULL AND id <= {maxId}",
             CancellationToken);
 
@@ -126,7 +126,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
     }
 
     [Fact]
-    public async Task QueryAsync_WithNullColumn_MapsCorrectly()
+    public async Task QueryStringAsync_WithNullColumn_MapsCorrectly()
     {
         // Arrange
         await using var connection = new SqlConnection(sqlServer.ConnectionString);
@@ -134,7 +134,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
         var userId = 2;
 
         // Act
-        var user = await connection.QuerySingleAsync<User>(
+        var user = await connection.QueryStringSingleAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id = {userId}",
             CancellationToken);
 
@@ -144,7 +144,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
     }
 
     [Fact]
-    public async Task ExecuteAsync_InsertAndQueryRoundTrip()
+    public async Task ExecuteStringAsync_InsertAndQueryRoundTrip()
     {
         // Arrange
         await using var connection = new SqlConnection(sqlServer.ConnectionString);
@@ -153,12 +153,12 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
         var name = "dave";
         string? email = null;
 
-        await connection.ExecuteAsync(
+        await connection.ExecuteStringAsync(
             $"INSERT INTO dapper_users (id, name, email) VALUES ({id}, {name}, {email})",
             CancellationToken);
 
         // Act
-        var user = await connection.QuerySingleAsync<User>(
+        var user = await connection.QueryStringSingleAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id = {id}",
             CancellationToken);
 
@@ -175,7 +175,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenInsertingMultipleRowsWithISqlServerRow_InsertsAllRows()
+    public async Task ExecuteStringAsync_WhenInsertingMultipleRowsWithISqlServerRow_InsertsAllRows()
     {
         // Arrange
         await using var connection = new SqlConnection(sqlServer.ConnectionString);
@@ -189,12 +189,12 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
         ];
 
         // Act
-        await connection.ExecuteAsync(
+        await connection.ExecuteStringAsync(
             $"INSERT INTO dapper_users (id, name, email) VALUES {SqlServerSql.InsertRows(users)}",
             CancellationToken);
 
         // Assert
-        var inserted = (await connection.QueryAsync<User>(
+        var inserted = (await connection.QueryStringAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id >= {50} AND id <= {52} ORDER BY id",
             CancellationToken)).ToList();
         Assert.Equal(3, inserted.Count);
@@ -208,7 +208,7 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
     // --- Batch insert with Table-Valued Parameter ---
 
     [Fact]
-    public async Task ExecuteAsync_WhenInsertingWithTableValuedParameter_InsertsAllRows()
+    public async Task ExecuteStringAsync_WhenInsertingWithTableValuedParameter_InsertsAllRows()
     {
         // Arrange
         await using var connection = new SqlConnection(sqlServer.ConnectionString);
@@ -223,14 +223,14 @@ public class SqlServerSqlDapperTests(SqlServerFixture sqlServer) : IClassFixture
         table.Rows.Add(72, "judy", "judy@example.com");
 
         // Act
-        await connection.ExecuteAsync(
+        await connection.ExecuteStringAsync(
             $"INSERT INTO tvp_users (id, name, email) SELECT id, name, email FROM {SqlServerSql.Table(table, "dbo.UserTableType")}",
             CancellationToken);
 
         // Assert
         var minId = 70;
         var maxId = 72;
-        var results = (await connection.QueryAsync<User>(
+        var results = (await connection.QueryStringAsync<User>(
             $"SELECT id, name, email FROM tvp_users WHERE id >= {minId} AND id <= {maxId} ORDER BY id",
             CancellationToken)).ToList();
 

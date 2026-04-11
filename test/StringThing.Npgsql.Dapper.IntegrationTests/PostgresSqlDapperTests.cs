@@ -11,7 +11,7 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
     public async ValueTask InitializeAsync()
     {
         await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
-        await connection.ExecuteAsync(
+        await connection.ExecuteStringAsync(
             $"""
             CREATE TABLE IF NOT EXISTS dapper_users (
                 id integer PRIMARY KEY,
@@ -21,7 +21,7 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
             """,
             CancellationToken);
 
-        await connection.ExecuteAsync(
+        await connection.ExecuteStringAsync(
             $"""
             INSERT INTO dapper_users (id, name, email) VALUES
                 (1, 'alice', 'alice@example.com'),
@@ -35,14 +35,14 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
     private record User(int Id, string Name, string? Email);
 
     [Fact]
-    public async Task QuerySingleAsync_ReturnsMappedObject()
+    public async Task QueryStringSingleAsync_ReturnsMappedObject()
     {
         // Arrange
         await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
         var userId = 1;
 
         // Act
-        var user = await connection.QuerySingleAsync<User>(
+        var user = await connection.QueryStringSingleAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id = {userId}",
             CancellationToken);
 
@@ -52,7 +52,7 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
     }
 
     [Fact]
-    public async Task QueryAsync_ReturnsMultipleMappedObjects()
+    public async Task QueryStringAsync_ReturnsMultipleMappedObjects()
     {
         // Arrange
         await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
@@ -60,7 +60,7 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
         var maxId = 3;
 
         // Act
-        var users = (await connection.QueryAsync<User>(
+        var users = (await connection.QueryStringAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id <= {maxId} ORDER BY id",
             CancellationToken)).ToList();
 
@@ -72,7 +72,7 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
     }
 
     [Fact]
-    public async Task QueryAsync_WithMultipleParameters_FiltersCorrectly()
+    public async Task QueryStringAsync_WithMultipleParameters_FiltersCorrectly()
     {
         // Arrange
         await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
@@ -82,7 +82,7 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
         var maxId = 3;
 
         // Act
-        var users = (await connection.QueryAsync<User>(
+        var users = (await connection.QueryStringAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id > {minId} AND id <= {maxId} AND name != {excludeName} ORDER BY id",
             CancellationToken)).ToList();
 
@@ -92,14 +92,14 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
     }
 
     [Fact]
-    public async Task QuerySingleOrDefaultAsync_WithNoMatch_ReturnsNull()
+    public async Task QueryStringSingleOrDefaultAsync_WithNoMatch_ReturnsNull()
     {
         // Arrange
         await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
         var userId = 999;
 
         // Act
-        var user = await connection.QuerySingleOrDefaultAsync<User>(
+        var user = await connection.QueryStringSingleOrDefaultAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id = {userId}",
             CancellationToken);
 
@@ -108,14 +108,14 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
     }
 
     [Fact]
-    public async Task QueryFirstAsync_ReturnsFirstMatch()
+    public async Task QueryStringFirstAsync_ReturnsFirstMatch()
     {
         // Arrange
         await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
         var minId = 0;
 
         // Act
-        var user = await connection.QueryFirstAsync<User>(
+        var user = await connection.QueryStringFirstAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id > {minId} ORDER BY id",
             CancellationToken);
 
@@ -124,13 +124,13 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
     }
 
     [Fact]
-    public async Task ExecuteScalarAsync_ReturnsValue()
+    public async Task ExecuteStringScalarAsync_ReturnsValue()
     {
         // Arrange
         await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
 
         // Act
-        var count = await connection.ExecuteScalarAsync<int>(
+        var count = await connection.ExecuteStringScalarAsync<int>(
             $"SELECT {Sql.Unsafe("COUNT(*)")} FROM dapper_users WHERE email IS NOT NULL",
             CancellationToken);
 
@@ -139,7 +139,7 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
     }
 
     [Fact]
-    public async Task ExecuteAsync_InsertAndQueryRoundTrip()
+    public async Task ExecuteStringAsync_InsertAndQueryRoundTrip()
     {
         // Arrange
         await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
@@ -147,12 +147,12 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
         var name = "dave";
         string? email = null;
 
-        await connection.ExecuteAsync(
+        await connection.ExecuteStringAsync(
             $"INSERT INTO dapper_users (id, name, email) VALUES ({id}, {name}, {email}) ON CONFLICT (id) DO NOTHING",
             CancellationToken);
 
         // Act
-        var user = await connection.QuerySingleAsync<User>(
+        var user = await connection.QueryStringSingleAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id = {id}",
             CancellationToken);
 
@@ -162,14 +162,14 @@ public class PostgresSqlDapperTests(PostgresFixture postgres) : IClassFixture<Po
     }
 
     [Fact]
-    public async Task QueryAsync_WithNullColumn_MapsCorrectly()
+    public async Task QueryStringAsync_WithNullColumn_MapsCorrectly()
     {
         // Arrange
         await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
         var userId = 2;
 
         // Act
-        var user = await connection.QuerySingleAsync<User>(
+        var user = await connection.QueryStringSingleAsync<User>(
             $"SELECT id, name, email FROM dapper_users WHERE id = {userId}",
             CancellationToken);
 
