@@ -10,9 +10,11 @@
     <InternalsVisibleTo Include="StringThing.Npgsql" />
     <InternalsVisibleTo Include="StringThing.SqlClient" />
     <InternalsVisibleTo Include="StringThing.MySql" />
+    <InternalsVisibleTo Include="StringThing.Sqlite" />
     <InternalsVisibleTo Include="StringThing.Npgsql.Tests" />
     <InternalsVisibleTo Include="StringThing.SqlClient.Tests" />
     <InternalsVisibleTo Include="StringThing.MySql.Tests" />
+    <InternalsVisibleTo Include="StringThing.Sqlite.Tests" />
   </ItemGroup>
 
 </Project>
