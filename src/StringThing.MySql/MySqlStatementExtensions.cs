@@ -29,12 +29,24 @@ public static class MySqlStatementExtensions
         where TNamer : IParameterNamer
     {
         var parameters = statement.Parameters;
-        var parameterNames = statement.ParameterNames;
+        var cachedPlaceholders = statement.CachedPlaceholders;
 
-        for (var i = 0; i < parameters.Count; i++)
+        if (cachedPlaceholders is not null)
         {
-            parameters[i].ParameterName = TNamer.WritePlaceholder(i, parameterNames[i]);
-            command.Parameters.Add(parameters[i]);
+            for (var i = 0; i < parameters.Count; i++)
+            {
+                parameters[i].ParameterName = cachedPlaceholders[i];
+                command.Parameters.Add(parameters[i]);
+            }
+        }
+        else
+        {
+            var parameterNames = statement.ParameterNames;
+            for (var i = 0; i < parameters.Count; i++)
+            {
+                parameters[i].ParameterName = TNamer.WritePlaceholder(i, parameterNames[i]);
+                command.Parameters.Add(parameters[i]);
+            }
         }
     }
 }

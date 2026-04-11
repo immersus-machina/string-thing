@@ -31,6 +31,21 @@ public class CommandCreationBenchmarks
         _connection.Dispose();
     }
 
+    // --- Zero parameters ---
+
+    [Benchmark(Description = "StringThing: 0 params")]
+    public NpgsqlCommand StringThing_ZeroParams()
+    {
+        PostgresSql stmt = $"SELECT COUNT(*) FROM users";
+        return stmt.ToCommand(_connection);
+    }
+
+    [Benchmark(Description = "Raw Npgsql: 0 params")]
+    public NpgsqlCommand RawNpgsql_ZeroParams()
+    {
+        return new NpgsqlCommand("SELECT COUNT(*) FROM users", _connection);
+    }
+
     // --- Single parameter ---
 
     [Benchmark(Description = "StringThing: 1 param")]

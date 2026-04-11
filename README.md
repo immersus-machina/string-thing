@@ -59,19 +59,19 @@ Benchmarked against raw ADO.NET and Dapper on SQLite in-memory. Queries return o
 
 | Scenario | Dapper | StringThing | ST vs Dapper |
 |----------|--------|-------------|--------------|
-| QuerySingle 1 param | +0.94 us / +0.68 KB | +1.03 us / +0.63 KB | +10% time, -7% alloc |
-| Query 2 params | +1.28 us / +0.89 KB | +1.17 us / +0.64 KB | -9% time, -28% alloc |
-| Query 5 params | +1.68 us / +1.54 KB | +1.54 us / +0.81 KB | -8% time, -47% alloc |
-| Execute insert | +0.86 us / +1.12 KB | +0.39 us / +0.36 KB | -54% time, -68% alloc |
+| QuerySingle 1 param | +1.03 us / +0.68 KB | +0.99 us / +0.60 KB | -4% time, -12% alloc |
+| Query 2 params | +1.20 us / +0.89 KB | +1.09 us / +0.60 KB | -9% time, -33% alloc |
+| Query 5 params | +1.64 us / +1.54 KB | +1.04 us / +0.62 KB | -37% time, -60% alloc |
+| Execute insert | +0.81 us / +1.12 KB | +0.23 us / +0.20 KB | -72% time, -82% alloc |
 
 ### IN list overhead
 
 | Scenario | Dapper | StringThing | ST vs Dapper |
 |----------|--------|-------------|--------------|
-| IN 10 items | +4.28 us / +3.87 KB | +2.60 us / +3.99 KB | -39% time |
-| IN 100 items | +71.58 us / +28.23 KB | +13.61 us / +26.86 KB | -81% time |
+| IN 10 items | +3.84 us / +3.87 KB | +2.55 us / +3.99 KB | -34% time |
+| IN 100 items | +72.83 us / +28.23 KB | +14.79 us / +26.86 KB | -80% time |
 
-Standard queries are within ~10% of Dapper, with consistently lower allocations (no anonymous object reflection). IN list expansion is where StringThing pulls ahead — Dapper rewrites the SQL string at runtime, StringThing builds the parameterized list directly.
+StringThing is faster than Dapper on every measured scenario after subtracting the raw ADO.NET cost, with consistently lower allocations (no anonymous object reflection). The gap widens on parameter-heavy paths — a 5-param query has 60% less allocation overhead, and an `Execute` insert has 72% less time overhead. IN list expansion pulls the furthest ahead — Dapper rewrites the SQL string at runtime, StringThing builds the parameterized list directly.
 
 ## What it is not
 

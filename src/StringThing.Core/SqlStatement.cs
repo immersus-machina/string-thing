@@ -89,7 +89,14 @@ public abstract class SqlStatement<TNamer, TParameter>
         }
     }
 
-    // --- Shared helpers ---
+    internal IReadOnlyList<string>? CachedPlaceholders
+    {
+        get
+        {
+            EnsureResolved();
+            return _builder.GetCachedPlaceholders();
+        }
+    }
 
     private static int FindDuplicate(List<string?> names, string? expression)
     {
@@ -138,8 +145,6 @@ public abstract class SqlStatement<TNamer, TParameter>
         }
     }
 
-    // --- Builder interface ---
-
     private interface IStatementBuilder
     {
         void AppendLiteral(string text);
@@ -147,6 +152,7 @@ public abstract class SqlStatement<TNamer, TParameter>
         void AppendFragment(SqlFragment<TParameter> fragment, string? expression);
         string GetSql();
         IReadOnlyList<string?> GetParameterNames();
+        IReadOnlyList<string>? GetCachedPlaceholders();
     }
 
     private interface IBuilderTemplate
@@ -220,10 +226,10 @@ public abstract class SqlStatement<TNamer, TParameter>
 
             _resolvedNames = new List<string?>(staticNames);
 
-            // Phase 2: Build SQL, extracting template segments if fragments exist
             var sql = new StringBuilder();
             StringBuilder? segmentBuilder = _deferredFragments.Count > 0 ? new StringBuilder() : null;
             List<string>? sqlSegments = _deferredFragments.Count > 0 ? new(_deferredFragments.Count + 1) : null;
+            var placeholders = new string[_parameters.Count];
             var staticCursor = 0;
 
             for (var i = 0; i < _segments.Count; i++)
@@ -238,11 +244,14 @@ public abstract class SqlStatement<TNamer, TParameter>
 
                     case SegmentKind.Parameter:
                     {
+                        var paramIndex = slotIndices[staticCursor];
                         var placeholder = TNamer.WritePlaceholder(
-                            slotIndices[staticCursor],
+                            paramIndex,
                             _staticParams[staticCursor].Expression);
                         sql.Append(placeholder);
                         segmentBuilder?.Append(placeholder);
+                        if (slotAdded[staticCursor])
+                            placeholders[paramIndex] = placeholder;
                         staticCursor++;
                         break;
                     }
@@ -262,11 +271,10 @@ public abstract class SqlStatement<TNamer, TParameter>
                 }
             }
 
-            // Phase 3: Cache template
             if (_deferredFragments.Count == 0)
             {
                 var sqlText = sql.ToString();
-                _cache.TryAdd(_cacheKey, new StaticTemplate(sqlText, slotAdded, staticNames.ToArray()));
+                _cache.TryAdd(_cacheKey, new StaticTemplate(sqlText, slotAdded, staticNames.ToArray(), placeholders));
                 return sqlText;
             }
             else
@@ -281,6 +289,8 @@ public abstract class SqlStatement<TNamer, TParameter>
         }
 
         public IReadOnlyList<string?> GetParameterNames() => _resolvedNames ?? [];
+
+        public IReadOnlyList<string>? GetCachedPlaceholders() => null;
     }
 
     // --- StaticTemplate: cached template for statements with no fragments ---
@@ -288,16 +298,18 @@ public abstract class SqlStatement<TNamer, TParameter>
     private sealed class StaticTemplate(
         string sqlText,
         bool[] slotAdded,
-        string?[] parameterNames) : IBuilderTemplate
+        string?[] parameterNames,
+        string[] placeholders) : IBuilderTemplate
     {
         public IStatementBuilder CreateBuilder(List<TParameter> parameters) =>
-            new StaticReplayBuilder(sqlText, slotAdded, parameterNames, parameters);
+            new StaticReplayBuilder(sqlText, slotAdded, parameterNames, placeholders, parameters);
     }
 
     private sealed class StaticReplayBuilder(
         string sqlText,
         bool[] slotAdded,
         string?[] parameterNames,
+        string[] placeholders,
         List<TParameter> parameters) : IStatementBuilder
     {
         private int _cursor;
@@ -317,6 +329,8 @@ public abstract class SqlStatement<TNamer, TParameter>
         public string GetSql() => sqlText;
 
         public IReadOnlyList<string?> GetParameterNames() => parameterNames;
+
+        public IReadOnlyList<string> GetCachedPlaceholders() => placeholders;
     }
 
     // --- DynamicTemplate: cached template for statements with fragment holes ---
@@ -391,5 +405,7 @@ public abstract class SqlStatement<TNamer, TParameter>
 
         public IReadOnlyList<string?> GetParameterNames() =>
             (IReadOnlyList<string?>?)_resolvedNames ?? _staticParameterNames;
+
+        public IReadOnlyList<string>? GetCachedPlaceholders() => null;
     }
 }

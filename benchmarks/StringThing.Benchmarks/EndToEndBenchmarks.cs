@@ -45,6 +45,28 @@ public class EndToEndBenchmarks
 
     public record User(long Id, string Name, string? Email, long Age, long Active);
 
+    // --- Zero-parameter query ---
+
+    [Benchmark(Description = "Raw: ExecuteScalar 0 param")]
+    public long Raw_ExecuteScalar_ZeroParam()
+    {
+        using var cmd = _connection.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM users";
+        return (long)cmd.ExecuteScalar()!;
+    }
+
+    [Benchmark(Description = "Dapper: ExecuteScalar 0 param")]
+    public long Dapper_ExecuteScalar_ZeroParam()
+    {
+        return _connection.ExecuteScalar<long>("SELECT COUNT(*) FROM users");
+    }
+
+    [Benchmark(Description = "StringThing: ExecuteStringScalar 0 param")]
+    public long StringThing_ExecuteScalar_ZeroParam()
+    {
+        return _connection.ExecuteStringScalar<long>($"SELECT COUNT(*) FROM users")!;
+    }
+
     // --- Single row query: 1 parameter ---
 
     [Benchmark(Description = "Raw: QuerySingle 1 param")]
