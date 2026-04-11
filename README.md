@@ -34,12 +34,16 @@ One package per provider. The handler accepts only types the target provider sup
 |---------|---------|
 | `StringThing.Npgsql` | Postgres provider |
 | `StringThing.SqlClient` | SQL Server provider |
+| `StringThing.MySql` | MySQL/MariaDB provider |
+| `StringThing.Sqlite` | SQLite provider |
 | `StringThing.Npgsql.Dapper` | Dapper integration for Postgres |
 | `StringThing.SqlClient.Dapper` | Dapper integration for SQL Server |
+| `StringThing.MySql.Dapper` | Dapper integration for MySQL/MariaDB |
+| `StringThing.Sqlite.Dapper` | Dapper integration for SQLite |
 
 ## What it is not
 
-Not a driver. Not an ORM. It sits on top of Npgsql or Microsoft.Data.SqlClient and adds the compile-time type contract they don't have.
+Not a driver. Not an ORM. It sits on top of Npgsql, Microsoft.Data.SqlClient, MySqlConnector, or Microsoft.Data.Sqlite and adds the compile-time type contract they don't have.
 
 ## Prior art
 
