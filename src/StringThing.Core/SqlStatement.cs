@@ -12,7 +12,7 @@ public abstract class SqlStatement<TNamer, TParameter>
     private static readonly ConcurrentDictionary<(string File, int Line), IBuilderTemplate> _cache = new();
 
     private readonly IStatementBuilder _builder;
-    private readonly List<TParameter> _parameters;
+    private readonly IReadOnlyList<TParameter> _parameters;
     private string? _resolvedSql;
 
     public SqlStatement(
@@ -22,15 +22,27 @@ public abstract class SqlStatement<TNamer, TParameter>
         [CallerLineNumber] int lineNumber = 0)
     {
         var cacheKey = (filePath, lineNumber);
-        _parameters = new List<TParameter>(formattedCount);
 
-        if (_cache.TryGetValue(cacheKey, out var template))
+        if (formattedCount == 0)
         {
-            _builder = template.CreateBuilder(_parameters);
+            _parameters = Array.Empty<TParameter>();
+            if (_cache.TryGetValue(cacheKey, out var template))
+                _builder = template.CreateBuilder(null!);
+            else
+                _builder = new ZeroParamFreshBuilder(cacheKey);
+            return;
+        }
+
+        var parameterList = new List<TParameter>(formattedCount);
+        _parameters = parameterList;
+
+        if (_cache.TryGetValue(cacheKey, out var nonZeroTemplate))
+        {
+            _builder = nonZeroTemplate.CreateBuilder(parameterList);
         }
         else
         {
-            _builder = new FreshBuilder(cacheKey, _parameters);
+            _builder = new FreshBuilder(cacheKey, parameterList);
         }
     }
 
@@ -405,6 +417,65 @@ public abstract class SqlStatement<TNamer, TParameter>
 
         public IReadOnlyList<string?> GetParameterNames() =>
             (IReadOnlyList<string?>?)_resolvedNames ?? _staticParameterNames;
+
+        public IReadOnlyList<string>? GetCachedPlaceholders() => null;
+    }
+
+    // --- Zero-parameter fast path ---
+
+    private sealed class ZeroParamFreshBuilder : IStatementBuilder
+    {
+        private readonly (string File, int Line) _cacheKey;
+        private string? _sql;
+
+        public ZeroParamFreshBuilder((string File, int Line) cacheKey)
+        {
+            _cacheKey = cacheKey;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AppendLiteral(string text) => _sql = text;
+
+        public void AppendParameter(TParameter parameter, string? expression) { }
+
+        public void AppendFragment(SqlFragment<TParameter> fragment, string? expression) { }
+
+        public string GetSql()
+        {
+            var sqlText = _sql ?? string.Empty;
+            _cache.TryAdd(_cacheKey, new ZeroParamTemplate(sqlText));
+            return sqlText;
+        }
+
+        public IReadOnlyList<string?> GetParameterNames() => [];
+
+        public IReadOnlyList<string>? GetCachedPlaceholders() => null;
+    }
+
+    private sealed class ZeroParamTemplate : IBuilderTemplate
+    {
+        private readonly IStatementBuilder _sharedBuilder;
+
+        public ZeroParamTemplate(string sql)
+        {
+            _sharedBuilder = new ZeroParamBuilder(sql);
+        }
+
+        public IStatementBuilder CreateBuilder(List<TParameter> parameters) => _sharedBuilder;
+    }
+
+    private sealed class ZeroParamBuilder(string sql) : IStatementBuilder
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AppendLiteral(string text) { }
+
+        public void AppendParameter(TParameter parameter, string? expression) { }
+
+        public void AppendFragment(SqlFragment<TParameter> fragment, string? expression) { }
+
+        public string GetSql() => sql;
+
+        public IReadOnlyList<string?> GetParameterNames() => [];
 
         public IReadOnlyList<string>? GetCachedPlaceholders() => null;
     }
