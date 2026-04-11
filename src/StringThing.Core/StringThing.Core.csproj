@@ -9,8 +9,10 @@
   <ItemGroup>
     <InternalsVisibleTo Include="StringThing.Npgsql" />
     <InternalsVisibleTo Include="StringThing.SqlClient" />
+    <InternalsVisibleTo Include="StringThing.MySql" />
     <InternalsVisibleTo Include="StringThing.Npgsql.Tests" />
     <InternalsVisibleTo Include="StringThing.SqlClient.Tests" />
+    <InternalsVisibleTo Include="StringThing.MySql.Tests" />
   </ItemGroup>
 
 </Project>

@@ -5,6 +5,7 @@
     <Project Path="src/StringThing.Npgsql.Dapper/StringThing.Npgsql.Dapper.csproj" />
     <Project Path="src/StringThing.SqlClient/StringThing.SqlClient.csproj" />
     <Project Path="src/StringThing.SqlClient.Dapper/StringThing.SqlClient.Dapper.csproj" />
+    <Project Path="src/StringThing.MySql/StringThing.MySql.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/StringThing.Core.Tests/StringThing.Core.Tests.csproj" />
@@ -14,5 +15,7 @@
     <Project Path="test/StringThing.SqlClient.Tests/StringThing.SqlClient.Tests.csproj" />
     <Project Path="test/StringThing.SqlClient.IntegrationTests/StringThing.SqlClient.IntegrationTests.csproj" />
     <Project Path="test/StringThing.SqlClient.Dapper.IntegrationTests/StringThing.SqlClient.Dapper.IntegrationTests.csproj" />
+    <Project Path="test/StringThing.MySql.Tests/StringThing.MySql.Tests.csproj" />
+    <Project Path="test/StringThing.MySql.IntegrationTests/StringThing.MySql.IntegrationTests.csproj" />
   </Folder>
 </Solution>
