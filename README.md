@@ -25,7 +25,7 @@ One package per provider. The handler accepts only types the target provider sup
 - **Injection safety by construction.** No string overload. The only path is `$"..."`.
 - **Parameter deduplication.** `$"WHERE a = {x} OR b = {x}"` produces one parameter. By variable identity, not value.
 - **Composable fragments.** Build `WHERE` clauses as typed fragments. Splice them in. Parameters renumber automatically.
-- **Batch inserts.** Multi-row VALUES via `InsertRows`, UNNEST for Postgres, TVPs for SQL Server.
+- **Multi-row inserts.** `InsertRows` for VALUES composition, UNNEST for Postgres, TVPs for SQL Server.
 - **Explicit unsafe escape hatch.** `Sql.Unsafe("table_name")` is the only way to inject raw text.
 
 ## Packages
