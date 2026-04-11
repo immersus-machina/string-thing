@@ -5,10 +5,14 @@ using StringThing.Core;
 namespace StringThing.Sqlite;
 
 [InterpolatedStringHandler]
-public sealed class Sqlite : SqliteStatement<NamedParameterNamer>
+public sealed class SqliteSql : SqliteStatement<NamedParameterNamer>
 {
-    public Sqlite(int literalLength, int formattedCount)
-        : base(literalLength, formattedCount) { }
+    public SqliteSql(
+        int literalLength,
+        int formattedCount,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0)
+        : base(literalLength, formattedCount, filePath, lineNumber) { }
 
     /// <summary>
     /// Expands an array of values into a parenthesized, comma-separated list for use with IN clauses.

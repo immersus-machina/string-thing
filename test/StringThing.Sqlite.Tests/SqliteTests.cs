@@ -19,7 +19,7 @@ public class SqliteTests
     public void WhenInterpolatingLiteralOnly_CapturesSqlAndProducesNoParameters()
     {
         // Act
-        Sqlite stmt = $"SELECT 1";
+        SqliteSql stmt = $"SELECT 1";
 
         // Assert
         Assert.Equal("SELECT 1", stmt.Sql);
@@ -33,7 +33,7 @@ public class SqliteTests
         var userId = 42;
 
         // Act
-        Sqlite stmt = $"SELECT * FROM users WHERE id = {userId}";
+        SqliteSql stmt = $"SELECT * FROM users WHERE id = {userId}";
 
         // Assert
         Assert.Equal("SELECT * FROM users WHERE id = @userId", stmt.Sql);
@@ -48,7 +48,7 @@ public class SqliteTests
         var matchValue = 99;
 
         // Act
-        Sqlite stmt = $"WHERE a = {matchValue} OR b = {matchValue}";
+        SqliteSql stmt = $"WHERE a = {matchValue} OR b = {matchValue}";
 
         // Assert
         Assert.Equal("WHERE a = @matchValue OR b = @matchValue", stmt.Sql);
@@ -62,7 +62,7 @@ public class SqliteTests
         string? email = null;
 
         // Act
-        Sqlite stmt = $"WHERE email = {email}";
+        SqliteSql stmt = $"WHERE email = {email}";
 
         // Assert
         Assert.Equal("WHERE email = @email", stmt.Sql);
@@ -77,7 +77,7 @@ public class SqliteTests
         var userId = 1;
 
         // Act
-        Sqlite stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
+        SqliteSql stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
 
         // Assert
         Assert.Equal("SELECT * FROM users WHERE id = @userId", stmt.Sql);
@@ -93,7 +93,7 @@ public class SqliteTests
         SqliteFragment filter = $"age >= {minAge} AND status = {status}";
 
         // Act
-        Sqlite stmt = $"SELECT * FROM users WHERE {filter}";
+        SqliteSql stmt = $"SELECT * FROM users WHERE {filter}";
 
         // Assert
         Assert.Contains("@filter_minAge", stmt.Sql);
@@ -107,7 +107,7 @@ public class SqliteTests
     public void InList_WhenCalledWithIntArray_ProducesParenthesizedList()
     {
         // Act
-        Sqlite stmt = $"WHERE id IN {Sqlite.InList([1, 2, 3])}";
+        SqliteSql stmt = $"WHERE id IN {SqliteSql.InList([1, 2, 3])}";
 
         // Assert
         Assert.Equal("WHERE id IN (@p0, @p1, @p2)", stmt.Sql);
@@ -122,7 +122,7 @@ public class SqliteTests
         var ids = new List<int> { 10, 20, 30 };
 
         // Act
-        Sqlite stmt = $"WHERE id IN {Sqlite.InList([.. ids])}";
+        SqliteSql stmt = $"WHERE id IN {SqliteSql.InList([.. ids])}";
 
         // Assert
         Assert.Equal("WHERE id IN (@p0, @p1, @p2)", stmt.Sql);
@@ -142,7 +142,7 @@ public class SqliteTests
         TestRow[] rows = [new(1, "alice"), new(2, "bob"), new(3, "carol")];
 
         // Act
-        Sqlite stmt = $"INSERT INTO t (id, name) VALUES {Sqlite.InsertRows(rows)}";
+        SqliteSql stmt = $"INSERT INTO t (id, name) VALUES {SqliteSql.InsertRows(rows)}";
 
         // Assert
         Assert.Equal("INSERT INTO t (id, name) VALUES (@p0, @p1), (@p2, @p3), (@p4, @p5)", stmt.Sql);
