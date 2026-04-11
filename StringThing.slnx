@@ -10,6 +10,9 @@
     <Project Path="src/StringThing.Sqlite/StringThing.Sqlite.csproj" />
     <Project Path="src/StringThing.Sqlite.Dapper/StringThing.Sqlite.Dapper.csproj" />
   </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/StringThing.Benchmarks/StringThing.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/test/">
     <Project Path="test/StringThing.Core.Tests/StringThing.Core.Tests.csproj" />
     <Project Path="test/StringThing.Npgsql.Tests/StringThing.Npgsql.Tests.csproj" />
