@@ -265,6 +265,19 @@ public class SqlServerSqlTests
     }
 
     [Fact]
+    public void InList_WhenCalledWithNamedVariable_FallsBackToIndexedParameters()
+    {
+        // Arrange
+        var myIds = new SqlServerValue[] { 1, 2, 3 };
+
+        // Act
+        SqlServerSql stmt = $"WHERE id IN {SqlServerSql.InList(myIds)}";
+
+        // Assert
+        Assert.Equal("WHERE id IN (@p0, @p1, @p2)", stmt.Sql);
+    }
+
+    [Fact]
     public void InList_WhenEmpty_Throws()
     {
         // Act & Assert

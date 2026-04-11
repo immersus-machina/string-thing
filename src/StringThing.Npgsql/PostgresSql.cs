@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Npgsql;
 
 namespace StringThing.Npgsql;
 
@@ -13,13 +14,18 @@ public sealed class PostgresSql : PostgresStatement<PostgresParameterNamer>
     /// for use in INSERT statements. Requires at least one row.
     /// </summary>
     /// <exception cref="ArgumentException">Thrown when <paramref name="rows"/> is empty.</exception>
-    public static PostgresFragment InsertRows<T>(IReadOnlyList<T> rows) where T : IPostgresRow
+    public static SqlFragment<NpgsqlParameter> InsertRows<T>(IReadOnlyList<T> rows) where T : IPostgresRow
     {
         if (rows.Count == 0)
             throw new ArgumentException("At least one row is required.", nameof(rows));
 
-        return rows
-            .Skip(1)
-            .Aggregate(rows[0].RowValues, (result, row) => $"{result}, {row.RowValues}");
+        var elementsPerRow = rows[0].RowValues.Elements.Count;
+        var elements = new List<SqlElement<NpgsqlParameter>>(rows.Count * elementsPerRow + rows.Count - 1);
+        for (var i = 0; i < rows.Count; i++)
+        {
+            if (i > 0) elements.Add(SqlElement<NpgsqlParameter>.Literal(", "));
+            elements.AddRange(rows[i].RowValues.Elements);
+        }
+        return SqlFragment<NpgsqlParameter>.CreateRecording(elements);
     }
 }

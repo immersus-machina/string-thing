@@ -1,5 +1,6 @@
 using System.Data;
 using System.Runtime.CompilerServices;
+using Microsoft.Data.SqlClient;
 
 namespace StringThing.SqlClient;
 
@@ -30,19 +31,25 @@ public sealed class SqlServerSql : SqlServerStatement<NamedParameterNamer>
     /// Example: <c>$"WHERE id IN {SqlServerSql.InList([1, 2, 3])}"</c> produces <c>WHERE id IN (@p0, @p1, @p2)</c>
     /// </summary>
     /// <exception cref="ArgumentException">Thrown when <paramref name="values"/> is empty.</exception>
-    public static SqlServerFragment InList(SqlServerValue[] values)
+    public static SqlFragment<SqlParameter> InList(
+        SqlServerValue[] values,
+        [CallerArgumentExpression(nameof(values))] string? expression = null)
     {
         if (values.Length == 0)
             throw new ArgumentException("At least one value is required.", nameof(values));
 
-        SqlServerFragment fragment = $"({values[0]}";
-        for (var i = 1; i < values.Length; i++)
+        var elements = new List<SqlElement<SqlParameter>>(values.Length * 2 + 1)
         {
-            var previous = fragment;
-            fragment = $"{previous}, {values[i]}";
+            SqlElement<SqlParameter>.Literal("(")
+        };
+        for (var i = 0; i < values.Length; i++)
+        {
+            if (i > 0) elements.Add(SqlElement<SqlParameter>.Literal(", "));
+            elements.Add(SqlElement<SqlParameter>.Param(values[i].ToSqlParameter(), $"{expression}[{i}]"));
         }
-        var result = fragment;
-        return $"{result})";
+        elements.Add(SqlElement<SqlParameter>.Literal(")"));
+
+        return SqlFragment<SqlParameter>.CreateRecording(elements);
     }
 
     /// <summary>
@@ -50,13 +57,18 @@ public sealed class SqlServerSql : SqlServerStatement<NamedParameterNamer>
     /// for use in INSERT statements. Requires at least one row.
     /// </summary>
     /// <exception cref="ArgumentException">Thrown when <paramref name="rows"/> is empty.</exception>
-    public static SqlServerFragment InsertRows<T>(IReadOnlyList<T> rows) where T : ISqlServerRow
+    public static SqlFragment<SqlParameter> InsertRows<T>(IReadOnlyList<T> rows) where T : ISqlServerRow
     {
         if (rows.Count == 0)
             throw new ArgumentException("At least one row is required.", nameof(rows));
 
-        return rows
-            .Skip(1)
-            .Aggregate(rows[0].RowValues, (result, row) => $"{result}, {row.RowValues}");
+        var elementsPerRow = rows[0].RowValues.Elements.Count;
+        var elements = new List<SqlElement<SqlParameter>>(rows.Count * elementsPerRow + rows.Count - 1);
+        for (var i = 0; i < rows.Count; i++)
+        {
+            if (i > 0) elements.Add(SqlElement<SqlParameter>.Literal(", "));
+            elements.AddRange(rows[i].RowValues.Elements);
+        }
+        return SqlFragment<SqlParameter>.CreateRecording(elements);
     }
 }

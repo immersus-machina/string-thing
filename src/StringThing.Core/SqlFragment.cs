@@ -5,11 +5,11 @@ namespace StringThing;
 /// <summary>
 /// A composable SQL fragment that captures parameters for splicing into a <see cref="SqlStatement{TNamer, TParameter}"/>.
 /// </summary>
-public abstract class SqlFragment<TParameter> where TParameter : class
+public class SqlFragment<TParameter> where TParameter : class
 {
-    private readonly List<SqlElement<TParameter>> _elements;
+    private List<SqlElement<TParameter>> _elements;
 
-    public SqlFragment(int literalLength, int formattedCount)
+    internal SqlFragment(int literalLength, int formattedCount)
     {
         _elements = new List<SqlElement<TParameter>>((formattedCount * 2) + 1);
     }
@@ -67,6 +67,11 @@ public abstract class SqlFragment<TParameter> where TParameter : class
         if (prefix is null || innerName is null)
             return null;
         return $"{prefix}.{innerName}";
+    }
+
+    internal static SqlFragment<TParameter> CreateRecording(List<SqlElement<TParameter>> elements)
+    {
+        return new SqlFragment<TParameter>(0, 0) { _elements = elements };
     }
 
     internal IReadOnlyList<SqlElement<TParameter>> Elements => _elements;

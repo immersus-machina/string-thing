@@ -36,7 +36,7 @@ public abstract class SqlStatement<TNamer, TParameter>
         [CallerArgumentExpression(nameof(fragment))] string? expression = null)
     {
         var prefix = SqlFragment<TParameter>.ResolveNamePrefix(expression);
-        var allowCrossContextDedup = prefix is not null;
+        var allowCrossContextDeduplication = prefix is not null;
         var elements = fragment.Elements;
         for (var i = 0; i < elements.Count; i++)
         {
@@ -48,7 +48,7 @@ public abstract class SqlStatement<TNamer, TParameter>
             else if (element.TryGetParameter(out var parameter, out var nestedExpression))
             {
                 var combinedName = SqlFragment<TParameter>.CombineNames(prefix, nestedExpression);
-                AppendParameter(parameter, combinedName, allowCrossContextDedup);
+                AppendParameter(parameter, combinedName, allowCrossContextDeduplication);
             }
         }
     }
