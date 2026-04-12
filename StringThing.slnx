@@ -9,6 +9,7 @@
     <Project Path="src/StringThing.MySql.Dapper/StringThing.MySql.Dapper.csproj" />
     <Project Path="src/StringThing.Sqlite/StringThing.Sqlite.csproj" />
     <Project Path="src/StringThing.Sqlite.Dapper/StringThing.Sqlite.Dapper.csproj" />
+    <Project Path="src/StringThing.Analyzers/StringThing.Analyzers.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/StringThing.Benchmarks/StringThing.Benchmarks.csproj" />
@@ -27,5 +28,6 @@
     <Project Path="test/StringThing.Sqlite.Tests/StringThing.Sqlite.Tests.csproj" />
     <Project Path="test/StringThing.Sqlite.IntegrationTests/StringThing.Sqlite.IntegrationTests.csproj" />
     <Project Path="test/StringThing.Sqlite.Dapper.IntegrationTests/StringThing.Sqlite.Dapper.IntegrationTests.csproj" />
+    <Project Path="test/StringThing.Analyzers.Tests/StringThing.Analyzers.Tests.csproj" />
   </Folder>
 </Solution>

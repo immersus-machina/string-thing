@@ -6,7 +6,14 @@ Compile-time type-safe interpolated SQL for .NET. Built on C# 10 interpolated st
 
 - `src/StringThing.Core/` — `UnsafeSql`, `Sql.Unsafe()`, `IParameterNamer` (namespace: `StringThing`)
 - `src/StringThing.Npgsql/` — `SqlStatement<TNamer>`, `SqlFragment`, Postgres-specific overloads (namespace: `StringThing.Npgsql`)
+- `src/StringThing.Analyzers/` — Roslyn analyzer (targets `netstandard2.0`), ships `ST0001`
 - `test/StringThing.Npgsql.Tests/` — xUnit v3 tests, runs as exe via `dotnet run`
+
+## Analyzer: ST0001
+
+`SqlStatement` caches interpolated string templates keyed on `(CallerFilePath, CallerLineNumber)`. Two handler invocations on the same source line share a cache key, causing silent incorrect parameter binding. The analyzer `ST0001` makes this a compile error.
+
+The analyzer is wired to all projects in the solution via `Directory.Build.props`. For NuGet distribution, include the analyzer DLL under `analyzers/dotnet/cs/` in the package.
 
 ## Build and test
 

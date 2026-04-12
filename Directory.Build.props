@@ -1,0 +1,9 @@
+<Project>
+
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'StringThing.Analyzers'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)src\StringThing.Analyzers\StringThing.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+</Project>

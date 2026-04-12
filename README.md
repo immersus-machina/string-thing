@@ -73,6 +73,28 @@ Benchmarked against raw ADO.NET and Dapper on SQLite in-memory. Queries return o
 
 StringThing is faster than Dapper on every measured scenario after subtracting the raw ADO.NET cost, with consistently lower allocations (no anonymous object reflection). The gap widens on parameter-heavy paths — a 5-param query has 60% less allocation overhead, and an `Execute` insert has 72% less time overhead. IN list expansion pulls the furthest ahead — Dapper rewrites the SQL string at runtime, StringThing builds the parameterized list directly.
 
+## Analyzer
+
+StringThing ships a Roslyn analyzer that runs in your IDE and at build time. One rule:
+
+| ID | Severity | Description |
+|----|----------|-------------|
+| ST0001 | Error | Multiple interpolated SQL statements on the same source line |
+
+StringThing caches interpolated string templates by source location. Two SQL statements on the same line share a cache key, which causes silent incorrect parameter binding. The analyzer prevents this at compile time.
+
+```csharp
+// ST0001 — move to separate lines
+var stmt = condition ? (PostgresSql)$"SELECT {x}" : (PostgresSql)$"SELECT {y}";
+
+// OK
+var stmt = condition
+    ? (PostgresSql)$"SELECT {x}"
+    : (PostgresSql)$"SELECT {y}";
+```
+
+The analyzer is included automatically when you reference any StringThing package.
+
 ## What it is not
 
 Not a driver. Not an ORM. Not a query builder. It sits on top of ADO.NET providers and adds parameterized interpolation they don't have.
