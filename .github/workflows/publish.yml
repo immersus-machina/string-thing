@@ -1,0 +1,88 @@
+name: Publish to NuGet
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release -p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Test Core
+        run: dotnet run --no-build -c Release --project test/StringThing.Core.Tests
+
+      - name: Test Npgsql
+        run: dotnet run --no-build -c Release --project test/StringThing.Npgsql.Tests
+
+      - name: Test SqlClient
+        run: dotnet run --no-build -c Release --project test/StringThing.SqlClient.Tests
+
+      - name: Test MySql
+        run: dotnet run --no-build -c Release --project test/StringThing.MySql.Tests
+
+      - name: Test Sqlite
+        run: dotnet run --no-build -c Release --project test/StringThing.Sqlite.Tests
+
+      - name: Test Analyzers
+        run: dotnet run --no-build -c Release --project test/StringThing.Analyzers.Tests
+
+      - name: Test Sqlite Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.Sqlite.IntegrationTests
+
+      - name: Test Sqlite Dapper Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.Sqlite.Dapper.IntegrationTests
+
+      - name: Test Npgsql Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.Npgsql.IntegrationTests
+
+      - name: Test Npgsql Dapper Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.Npgsql.Dapper.IntegrationTests
+
+      - name: Test SqlClient Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.SqlClient.IntegrationTests
+
+      - name: Test SqlClient Dapper Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.SqlClient.Dapper.IntegrationTests
+
+      - name: Test MySql Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.MySql.IntegrationTests
+
+      - name: Test MySql Dapper Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.MySql.Dapper.IntegrationTests
+
+      - name: Pack
+        run: |
+          dotnet pack src/StringThing.Npgsql --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
+          dotnet pack src/StringThing.SqlClient --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
+          dotnet pack src/StringThing.MySql --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
+          dotnet pack src/StringThing.Sqlite --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
+          dotnet pack src/StringThing.Npgsql.Dapper -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
+          dotnet pack src/StringThing.SqlClient.Dapper -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
+          dotnet pack src/StringThing.MySql.Dapper -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
+          dotnet pack src/StringThing.Sqlite.Dapper -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
+
+      - name: Push to NuGet
+        run: |
+          dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet nuget push ./artifacts/*.snupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

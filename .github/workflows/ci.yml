@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Test Core
+        run: dotnet run --no-build -c Release --project test/StringThing.Core.Tests
+
+      - name: Test Npgsql
+        run: dotnet run --no-build -c Release --project test/StringThing.Npgsql.Tests
+
+      - name: Test SqlClient
+        run: dotnet run --no-build -c Release --project test/StringThing.SqlClient.Tests
+
+      - name: Test MySql
+        run: dotnet run --no-build -c Release --project test/StringThing.MySql.Tests
+
+      - name: Test Sqlite
+        run: dotnet run --no-build -c Release --project test/StringThing.Sqlite.Tests
+
+      - name: Test Analyzers
+        run: dotnet run --no-build -c Release --project test/StringThing.Analyzers.Tests
+
+      - name: Test Sqlite Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.Sqlite.IntegrationTests
+
+      - name: Test Sqlite Dapper Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.Sqlite.Dapper.IntegrationTests
+
+      - name: Test Npgsql Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.Npgsql.IntegrationTests
+
+      - name: Test Npgsql Dapper Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.Npgsql.Dapper.IntegrationTests
+
+      - name: Test SqlClient Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.SqlClient.IntegrationTests
+
+      - name: Test SqlClient Dapper Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.SqlClient.Dapper.IntegrationTests
+
+      - name: Test MySql Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.MySql.IntegrationTests
+
+      - name: Test MySql Dapper Integration
+        run: dotnet run --no-build -c Release --project test/StringThing.MySql.Dapper.IntegrationTests

@@ -4,6 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Description>Dapper result mapping for StringThing.Sqlite. Injection-safe interpolated SQL on input, Dapper mapping on output. Dapper is bundled internally.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +21,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\StringThing.Sqlite\StringThing.Sqlite.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <Target Name="IncludeInternalDependencies" BeforeTargets="_GetPackageFiles" Condition="'$(NuGetPack)' == 'true'">

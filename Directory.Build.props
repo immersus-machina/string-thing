@@ -1,9 +1,24 @@
 <Project>
 
+  <PropertyGroup>
+    <Authors>StringThing Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/immersus-machina/string-thing</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/immersus-machina/string-thing</RepositoryUrl>
+    <PackageTags>sql;parameterization;interpolation;dapper;ado-net;injection-safety</PackageTags>
+  </PropertyGroup>
+
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'StringThing.Analyzers'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)src\StringThing.Analyzers\StringThing.Analyzers.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'StringThing.Analyzers' AND '$(MSBuildProjectName)' != 'StringThing.Core' AND !$(MSBuildProjectName.EndsWith('Tests'))">
+    <None Include="$(MSBuildThisFileDirectory)src\StringThing.Analyzers\bin\$(Configuration)\netstandard2.0\StringThing.Analyzers.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs"
+          Visible="false" />
   </ItemGroup>
 
 </Project>
