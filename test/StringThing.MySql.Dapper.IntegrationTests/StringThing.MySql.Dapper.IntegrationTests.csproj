@@ -10,7 +10,10 @@
   <ItemGroup>
     <PackageReference Include="xunit.v3" Version="3.2.2" />
     <PackageReference Include="Testcontainers.MySql" Version="4.11.0" />
-    <PackageReference Include="StringThing.MySql.Dapper" Version="0.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\StringThing.MySql.Dapper\StringThing.MySql.Dapper.csproj" />
   </ItemGroup>
 
 </Project>

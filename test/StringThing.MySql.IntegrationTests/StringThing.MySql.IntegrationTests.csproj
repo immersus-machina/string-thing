@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\StringThing.Core\StringThing.Core.csproj" />
     <ProjectReference Include="..\..\src\StringThing.MySql\StringThing.MySql.csproj" />
   </ItemGroup>
 
