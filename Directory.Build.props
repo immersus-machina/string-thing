@@ -1,12 +1,26 @@
 <Project>
 
   <PropertyGroup>
-    <Authors>StringThing Contributors</Authors>
+    <Authors>Immersus Machina</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/immersus-machina/string-thing</RepositoryUrl>
+    <RepositoryUrl>https://github.com/immersus-machina/string-thing.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageTags>sql;parameterization;interpolation;dapper;ado-net;injection-safety</PackageTags>
+
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
+  </ItemGroup>
 
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'StringThing.Analyzers'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)src\StringThing.Analyzers\StringThing.Analyzers.csproj"

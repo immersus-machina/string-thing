@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Description>Injection-safe interpolated SQL for SQL Server via Microsoft.Data.SqlClient. Named parameters, TVP support. Includes Roslyn analyzer.</Description>
+    <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/src/StringThing.SqlClient</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

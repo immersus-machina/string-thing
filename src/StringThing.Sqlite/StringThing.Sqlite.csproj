@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Description>Injection-safe interpolated SQL for SQLite via Microsoft.Data.Sqlite. Parameterization ergonomics for embedded databases. Includes Roslyn analyzer.</Description>
+    <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/src/StringThing.Sqlite</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

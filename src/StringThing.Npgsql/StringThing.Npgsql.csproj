@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Description>Injection-safe interpolated SQL for Postgres via Npgsql. 87 typed parameter variants with zero boxing. Includes Roslyn analyzer.</Description>
+    <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/src/StringThing.Npgsql</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
