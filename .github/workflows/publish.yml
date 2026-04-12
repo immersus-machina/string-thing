@@ -73,6 +73,7 @@ jobs:
 
       - name: Pack provider packages
         run: |
+          dotnet pack src/StringThing.Core --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
           dotnet pack src/StringThing.Npgsql --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
           dotnet pack src/StringThing.SqlClient --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
           dotnet pack src/StringThing.MySql --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts

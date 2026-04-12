@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
+    <Description>Core types for StringThing interpolated SQL parameterization. Not intended for direct use — install a provider package instead.</Description>
   </PropertyGroup>
 
   <ItemGroup>
