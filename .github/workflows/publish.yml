@@ -71,16 +71,23 @@ jobs:
       - name: Test MySql Dapper Integration
         run: dotnet run --no-build -c Release --project test/StringThing.MySql.Dapper.IntegrationTests
 
-      - name: Pack
+      - name: Pack provider packages
         run: |
           dotnet pack src/StringThing.Npgsql --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
           dotnet pack src/StringThing.SqlClient --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
           dotnet pack src/StringThing.MySql --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
           dotnet pack src/StringThing.Sqlite --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
-          dotnet pack src/StringThing.Npgsql.Dapper -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
-          dotnet pack src/StringThing.SqlClient.Dapper -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
-          dotnet pack src/StringThing.MySql.Dapper -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
-          dotnet pack src/StringThing.Sqlite.Dapper -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
+
+      - name: Pack Dapper packages
+        run: |
+          dotnet build src/StringThing.Npgsql.Dapper -c Release -p:NuGetPack=true
+          dotnet pack src/StringThing.Npgsql.Dapper --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
+          dotnet build src/StringThing.SqlClient.Dapper -c Release -p:NuGetPack=true
+          dotnet pack src/StringThing.SqlClient.Dapper --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
+          dotnet build src/StringThing.MySql.Dapper -c Release -p:NuGetPack=true
+          dotnet pack src/StringThing.MySql.Dapper --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
+          dotnet build src/StringThing.Sqlite.Dapper -c Release -p:NuGetPack=true
+          dotnet pack src/StringThing.Sqlite.Dapper --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
 
       - name: Push to NuGet
         run: |
