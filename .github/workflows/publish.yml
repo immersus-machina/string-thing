@@ -81,13 +81,13 @@ jobs:
 
       - name: Pack Dapper packages
         run: |
-          dotnet build src/StringThing.Npgsql.Dapper -c Release -p:NuGetPack=true
+          dotnet build src/StringThing.Npgsql.Dapper -c Release -p:NuGetPack=true -p:Version=${{ steps.version.outputs.VERSION }}
           dotnet pack src/StringThing.Npgsql.Dapper --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
-          dotnet build src/StringThing.SqlClient.Dapper -c Release -p:NuGetPack=true
+          dotnet build src/StringThing.SqlClient.Dapper -c Release -p:NuGetPack=true -p:Version=${{ steps.version.outputs.VERSION }}
           dotnet pack src/StringThing.SqlClient.Dapper --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
-          dotnet build src/StringThing.MySql.Dapper -c Release -p:NuGetPack=true
+          dotnet build src/StringThing.MySql.Dapper -c Release -p:NuGetPack=true -p:Version=${{ steps.version.outputs.VERSION }}
           dotnet pack src/StringThing.MySql.Dapper --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
-          dotnet build src/StringThing.Sqlite.Dapper -c Release -p:NuGetPack=true
+          dotnet build src/StringThing.Sqlite.Dapper -c Release -p:NuGetPack=true -p:Version=${{ steps.version.outputs.VERSION }}
           dotnet pack src/StringThing.Sqlite.Dapper --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -p:NuGetPack=true -o ./artifacts
 
       - name: Push to NuGet
