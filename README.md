@@ -73,6 +73,8 @@ Benchmarked against raw ADO.NET and Dapper on SQLite in-memory. Queries return o
 
 StringThing is faster than Dapper on every measured scenario after subtracting the raw ADO.NET cost, with consistently lower allocations (no anonymous object reflection). The gap widens on parameter-heavy paths — a 5-param query has 60% less allocation overhead, and an `Execute` insert has 72% less time overhead. IN list expansion pulls the furthest ahead — Dapper rewrites the SQL string at runtime, StringThing builds the parameterized list directly.
 
+Benchmark source: [EndToEndBenchmarks.cs](benchmarks/StringThing.Benchmarks/EndToEndBenchmarks.cs), [InListBenchmarks.cs](benchmarks/StringThing.Benchmarks/InListBenchmarks.cs), [CommandCreationBenchmarks.cs](benchmarks/StringThing.Benchmarks/CommandCreationBenchmarks.cs)
+
 ## Analyzer
 
 StringThing ships a Roslyn analyzer that runs in your IDE and at build time. One rule:
