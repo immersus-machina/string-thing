@@ -2,6 +2,12 @@
 
 Injection-safe interpolated SQL for SQL Server with type-checked parameterization, built on Microsoft.Data.SqlClient. Part of [StringThing](https://github.com/immersus-machina/string-thing).
 
+## Install
+
+```
+dotnet add package StringThing.SqlClient
+```
+
 ## Quick start
 
 ```csharp

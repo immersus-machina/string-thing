@@ -4,11 +4,17 @@ Injection-safe interpolated SQL for SQLite, built on Microsoft.Data.Sqlite. Part
 
 SQLite is dynamically typed — the compile-time type contract here is light. The value is injection safety by construction, parameter deduplication, and composable fragments.
 
+## Install
+
+```
+dotnet add package StringThing.Sqlite
+```
+
 ## Quick start
 
 ```csharp
 var userId = 42;
-Sqlite stmt = $"SELECT name FROM users WHERE id = {userId}";
+SqliteSql stmt = $"SELECT name FROM users WHERE id = {userId}";
 using var command = stmt.ToCommand(connection);
 ```
 
@@ -31,7 +37,7 @@ var minAge = 18;
 var status = "active";
 SqliteFragment filter = $"age >= {minAge} AND status = {status}";
 
-Sqlite stmt = $"SELECT * FROM users WHERE {filter}";
+SqliteSql stmt = $"SELECT * FROM users WHERE {filter}";
 ```
 
 ## Multi-row insert
@@ -43,14 +49,14 @@ record InsertUser(int Id, string Name, string? Email) : ISqliteRow
 }
 
 var users = new InsertUser[] { new(1, "alice", "alice@example.com"), new(2, "bob", null) };
-Sqlite stmt = $"INSERT INTO users (id, name, email) VALUES {Sqlite.InsertRows(users)}";
+SqliteSql stmt = $"INSERT INTO users (id, name, email) VALUES {SqliteSql.InsertRows(users)}";
 ```
 
 ## IN list
 
 ```csharp
 var ids = new List<int> { 1, 2, 3 };
-Sqlite stmt = $"SELECT * FROM users WHERE id IN {Sqlite.InList([.. ids])}";
+SqliteSql stmt = $"SELECT * FROM users WHERE id IN {SqliteSql.InList([.. ids])}";
 ```
 
 ## Unsafe escape hatch
@@ -59,5 +65,5 @@ Sqlite stmt = $"SELECT * FROM users WHERE id IN {Sqlite.InList([.. ids])}";
 using StringThing.UnsafeSql;
 
 var tableName = Sql.Unsafe("users");
-Sqlite stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
+SqliteSql stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
 ```

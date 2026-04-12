@@ -1,6 +1,12 @@
 # StringThing.Npgsql
 
-Compile-time type-safe interpolated SQL for PostgreSQL, built on Npgsql. Part of [StringThing](https://github.com/immersus-machina/string-thing).
+Injection-safe interpolated SQL for PostgreSQL, built on Npgsql. Part of [StringThing](https://github.com/immersus-machina/string-thing).
+
+## Install
+
+```
+dotnet add package StringThing.Npgsql
+```
 
 ## Quick start
 
@@ -38,15 +44,6 @@ record InsertUser(int Id, string Name, string? Email) : IPostgresRow
 
 var users = new InsertUser[] { new(1, "alice", "alice@example.com"), new(2, "bob", null) };
 PostgresSql stmt = $"INSERT INTO users (id, name, email) VALUES {PostgresSql.InsertRows(users)}";
-```
-
-## UNNEST for large batches
-
-```csharp
-var ids = users.Select(u => u.Id).ToArray();
-var names = users.Select(u => u.Name).ToArray();
-
-PostgresSql stmt = $"INSERT INTO users (id, name) SELECT * FROM UNNEST({ids}, {names})";
 ```
 
 ## JSON

@@ -1,6 +1,12 @@
 # StringThing.Sqlite.Dapper
 
-Dapper result mapping for [StringThing.Sqlite](https://github.com/immersus-machina/string-thing). Type-safe interpolated SQL on the input side, Dapper mapping on the output side.
+Dapper result mapping for [StringThing.Sqlite](https://github.com/immersus-machina/string-thing). Injection-safe interpolated SQL on the input side, Dapper mapping on the output side.
+
+## Install
+
+```
+dotnet add package StringThing.Sqlite.Dapper
+```
 
 ## Quick start
 

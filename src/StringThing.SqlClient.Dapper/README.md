@@ -1,6 +1,12 @@
 # StringThing.SqlClient.Dapper
 
-Dapper result mapping for [StringThing.SqlClient](https://github.com/immersus-machina/string-thing). Type-safe interpolated SQL on the input side, Dapper mapping on the output side.
+Dapper result mapping for [StringThing.SqlClient](https://github.com/immersus-machina/string-thing). Injection-safe interpolated SQL on the input side, Dapper mapping on the output side.
+
+## Install
+
+```
+dotnet add package StringThing.SqlClient.Dapper
+```
 
 ## Quick start
 

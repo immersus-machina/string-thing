@@ -2,6 +2,12 @@
 
 Injection-safe interpolated SQL for MySQL/MariaDB with type-checked parameterization, built on MySqlConnector. Part of [StringThing](https://github.com/immersus-machina/string-thing).
 
+## Install
+
+```
+dotnet add package StringThing.MySql
+```
+
 ## Quick start
 
 ```csharp

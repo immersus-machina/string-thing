@@ -1,6 +1,12 @@
 # StringThing.MySql.Dapper
 
-Dapper result mapping for [StringThing.MySql](https://github.com/immersus-machina/string-thing). Type-safe interpolated SQL on the input side, Dapper mapping on the output side.
+Dapper result mapping for [StringThing.MySql](https://github.com/immersus-machina/string-thing). Injection-safe interpolated SQL on the input side, Dapper mapping on the output side.
+
+## Install
+
+```
+dotnet add package StringThing.MySql.Dapper
+```
 
 ## Quick start
 
