@@ -59,7 +59,7 @@ Benchmarked against raw ADO.NET and Dapper on SQLite in-memory. Queries return o
 
 | Scenario | Dapper | StringThing | ST vs Dapper |
 |----------|--------|-------------|--------------|
-| QuerySingle 1 param | +1.03 us / +0.68 KB | +0.99 us / +0.60 KB | -4% time, -12% alloc |
+| QuerySingle 1 param | +1.03 us / +0.68 KB | +0.99 us / +0.60 KB | ~same time, -12% alloc |
 | Query 2 params | +1.20 us / +0.89 KB | +1.09 us / +0.60 KB | -9% time, -33% alloc |
 | Query 5 params | +1.64 us / +1.54 KB | +1.04 us / +0.62 KB | -37% time, -60% alloc |
 | Execute insert | +0.81 us / +1.12 KB | +0.23 us / +0.20 KB | -72% time, -82% alloc |
