@@ -4,10 +4,15 @@ Compile-time type-safe interpolated SQL for .NET. Built on C# 10 interpolated st
 
 ## Project structure
 
-- `src/StringThing.Core/` — `UnsafeSql`, `Sql.Unsafe()`, `IParameterNamer` (namespace: `StringThing`)
-- `src/StringThing.Npgsql/` — `SqlStatement<TNamer>`, `SqlFragment`, Postgres-specific overloads (namespace: `StringThing.Npgsql`)
+- `src/StringThing.Core/` — `SqlStatement<TNamer, TParameter>`, `SqlFragment<TParameter>`, `SqlElement<TParameter>`, `IParameterNamer`, `UnsafeSql` (namespace: `StringThing.Core`)
+- `src/StringThing.Npgsql/` — `PostgresSql`, `PostgresValue`, Postgres-specific overloads (namespace: `StringThing.Npgsql`)
+- `src/StringThing.SqlClient/` — `SqlServerSql`, `SqlServerValue` (namespace: `StringThing.SqlClient`)
+- `src/StringThing.MySql/` — `MySql`, `MySqlValue` (namespace: `StringThing.MySql`)
+- `src/StringThing.Sqlite/` — `SqliteSql`, `SqliteValue` (namespace: `StringThing.Sqlite`)
+- `src/StringThing.*.Dapper/` — Dapper result mapping extensions per provider
 - `src/StringThing.Analyzers/` — Roslyn analyzer (targets `netstandard2.0`), ships `ST0001`
-- `test/StringThing.Npgsql.Tests/` — xUnit v3 tests, runs as exe via `dotnet run`
+- `test/` — one test project per library, xUnit v3, runs via `dotnet run`
+- `benchmarks/StringThing.Benchmarks/` — BenchmarkDotNet, SQLite in-memory
 
 ## Analyzer: ST0001
 

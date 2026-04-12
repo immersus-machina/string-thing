@@ -95,6 +95,10 @@ var stmt = condition
 
 The analyzer is included automatically when you reference any StringThing package.
 
+## Caching
+
+StringThing caches the SQL template for each call site after the first execution, keyed on `CallerFilePath` + `CallerLineNumber`. Subsequent calls at the same site skip all string building and parameter name resolution. Cache entries are never evicted — the total number is bounded by the number of unique SQL statements in your compiled code, not by runtime behavior. Each entry is roughly the size of the SQL string plus a small array for parameter metadata.
+
 ## What it is not
 
 Not a driver. Not an ORM. Not a query builder. It sits on top of ADO.NET providers and adds parameterized interpolation they don't have.
