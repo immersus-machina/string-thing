@@ -7,6 +7,7 @@
     <Description>Dapper result mapping for StringThing.SqlClient. Injection-safe interpolated SQL on input, Dapper mapping on output. Dapper is bundled internally.</Description>
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/src/StringThing.SqlClient.Dapper</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <CopyLocalLockFileAssemblies Condition="'$(NuGetPack)' == 'true'">true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>

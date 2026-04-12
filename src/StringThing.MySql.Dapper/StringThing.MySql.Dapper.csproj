@@ -7,6 +7,7 @@
     <Description>Dapper result mapping for StringThing.MySql. Injection-safe interpolated SQL on input, Dapper mapping on output. Dapper is bundled internally.</Description>
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/src/StringThing.MySql.Dapper</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <CopyLocalLockFileAssemblies Condition="'$(NuGetPack)' == 'true'">true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
