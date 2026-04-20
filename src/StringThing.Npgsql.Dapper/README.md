@@ -57,3 +57,7 @@ await connection.ExecuteStringAsync(
 ## Dapper license
 
 This package bundles [Dapper](https://github.com/DapperLib/Dapper) internally for result mapping. Dapper is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0), copyright 2019 Stack Exchange, Inc. The bundled Dapper DLL is not exposed as a dependency — consumers do not need a separate Dapper reference.
+
+---
+
+Built by [Immersus Machina](https://www.immersus-machina.com)

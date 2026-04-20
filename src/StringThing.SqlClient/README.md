@@ -100,3 +100,7 @@ SqlServerSql stmt = $"WHERE created < {SqlServerSql.DateTime(date)}";
 var tableName = Sql.Unsafe("users");
 SqlServerSql stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
 ```
+
+---
+
+Built by [Immersus Machina](https://www.immersus-machina.com)

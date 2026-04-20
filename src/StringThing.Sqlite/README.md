@@ -67,3 +67,7 @@ using StringThing.UnsafeSql;
 var tableName = Sql.Unsafe("users");
 SqliteSql stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
 ```
+
+---
+
+Built by [Immersus Machina](https://www.immersus-machina.com)

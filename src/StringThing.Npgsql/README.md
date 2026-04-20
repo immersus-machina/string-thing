@@ -65,3 +65,7 @@ PostgresSql stmt = $"INSERT INTO data (payload) VALUES ({userData})";
 var tableName = Sql.Unsafe("users");
 PostgresSql stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
 ```
+
+---
+
+Built by [Immersus Machina](https://www.immersus-machina.com)

@@ -110,3 +110,7 @@ Not a driver. Not an ORM. Not a query builder. It sits on top of ADO.NET provide
 - **[`porsager/postgres`](https://github.com/porsager/postgres)** (Node/TS) — tagged template literals as the only query API. The direct inspiration for "interpolation-only, no string escape hatch."
 - **[`InterpolatedSql`](https://github.com/Drizin/InterpolatedSql)** — existing .NET library for interpolated SQL parameterization. Uses `FormattableString`, accepts any type at runtime, database-agnostic. StringThing differs by restricting types per provider at compile time.
 - **EF Core `FromSqlInterpolated`** — proves the ergonomic model works for .NET developers. StringThing removes the EF dependency.
+
+---
+
+Built by [Immersus Machina](https://www.immersus-machina.com)
