@@ -18,6 +18,56 @@ await using var command = stmt.ToCommand(connection);
 
 Parameters are named automatically using the variable name: `@userId`, not `@p0`.
 
+## Result mapping
+
+Mark row types with `[StringThingRow]` and declare them `partial`. A source generator emits an AOT-friendly row materializer — no reflection, no IL emit, no third-party mapper.
+
+```csharp
+using StringThing.Aot;
+
+[StringThingRow]
+public partial record User(int Id, string Name, string? Email);
+
+var user = await connection.QueryStringSingleAsync<User>(
+    $"SELECT id AS Id, name AS Name, email AS Email FROM users WHERE id = {userId}");
+
+var users = await connection.QueryStringAsync<User>(
+    $"SELECT id AS Id, name AS Name, email AS Email FROM users ORDER BY id");
+
+await connection.ExecuteStringAsync($"DELETE FROM users WHERE id = {userId}");
+```
+
+The full surface: `QueryString<T>`, `QueryStringFirst<T>`, `QueryStringFirstOrDefault<T>`, `QueryStringSingle<T>`, `QueryStringSingleOrDefault<T>`, `ExecuteString`, `ExecuteStringScalar` (+ `T` overload), plus `Async` variants. Column ordinals are resolved once per query; rows are then read by ordinal — name-based binding without per-row name lookup.
+
+Override the column name with `[Column]` from `System.ComponentModel.DataAnnotations.Schema`:
+
+```csharp
+[StringThingRow]
+public partial record User(
+    [property: Column("user_id")] int Id,
+    [property: Column("full_name")] string Name);
+```
+
+Nullable annotations drive `IsDBNull` checks — `string?` becomes a null-checked read; `string` is a direct read.
+
+If the generator can't handle your shape — say, you want to derive a property from a column rather than read it straight, or read columns into a shape the generator couldn't infer from the type — implement `IStringThingRow<T>` by hand. Same runtime path:
+
+```csharp
+public sealed class UserSummary : IStringThingRow<UserSummary>
+{
+    public int Id { get; init; }
+    public string Status { get; init; } = "";
+
+    public static ReadOnlySpan<string> ColumnBindingOrder => ["id", "email"];
+
+    public static UserSummary Read(DbDataReader reader, ReadOnlySpan<int> ordinals) => new()
+    {
+        Id = reader.GetInt32(ordinals[0]),
+        Status = reader.IsDBNull(ordinals[1]) ? "no-email" : "has-email",
+    };
+}
+```
+
 ## Supported types
 
 `bool`, `byte`, `sbyte`, `short`, `ushort`, `int`, `uint`, `long`, `ulong`, `float`, `double`, `decimal`, `string`, `char`, `Guid`, `DateTime`, `DateTimeOffset`, `DateOnly`, `TimeOnly`, `TimeSpan`, `byte[]`.

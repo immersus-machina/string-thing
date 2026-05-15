@@ -1,10 +1,13 @@
 using BenchmarkDotNet.Attributes;
 using Dapper;
 using Microsoft.Data.Sqlite;
+using StringThing.Aot;
 using StringThing.Sqlite;
-using StringThing.Sqlite.Dapper;
 
 namespace StringThing.Benchmarks;
+
+[StringThingRow]
+public partial record BenchmarkInListUser(long Id, string Name, string? Email);
 
 [MemoryDiagnoser]
 public class InListBenchmarks
@@ -25,8 +28,6 @@ public class InListBenchmarks
     private int[] _hundredItems = null!;
     private List<int> _tenItemsList = null!;
     private List<int> _hundredItemsList = null!;
-
-    public record User(long Id, string Name, string? Email);
 
     [GlobalSetup]
     public void Setup()
@@ -66,62 +67,62 @@ public class InListBenchmarks
     // --- 10 items ---
 
     [Benchmark(Description = "Raw: IN 10 (prebuilt SQL)")]
-    public List<User> Raw_InList_Ten()
+    public List<BenchmarkInListUser> Raw_InList_Ten()
     {
         using var cmd = _connection.CreateCommand();
         cmd.CommandText = _prebuiltSql10;
         for (var i = 0; i < 10; i++)
             cmd.Parameters.AddWithValue($"@p{i}", _tenItems[i]);
         using var reader = cmd.ExecuteReader();
-        var results = new List<User>();
+        var results = new List<BenchmarkInListUser>();
         while (reader.Read())
-            results.Add(new User(reader.GetInt64(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2)));
+            results.Add(new BenchmarkInListUser(reader.GetInt64(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2)));
         return results;
     }
 
     [Benchmark(Description = "Dapper: IN 10")]
-    public List<User> Dapper_InList_Ten()
+    public List<BenchmarkInListUser> Dapper_InList_Ten()
     {
-        return _connection.Query<User>(
+        return _connection.Query<BenchmarkInListUser>(
             "SELECT id, name, email FROM users WHERE id IN @ids",
             new { ids = _tenItemsList }).ToList();
     }
 
     [Benchmark(Description = "StringThing: IN 10")]
-    public List<User> StringThing_InList_Ten()
+    public List<BenchmarkInListUser> StringThing_InList_Ten()
     {
-        return _connection.QueryString<User>(
+        return _connection.QueryString<BenchmarkInListUser>(
             $"SELECT id, name, email FROM users WHERE id IN {SqliteSql.InList([.. _tenItems])}").ToList();
     }
 
     // --- 100 items ---
 
     [Benchmark(Description = "Raw: IN 100 (prebuilt SQL)")]
-    public List<User> Raw_InList_Hundred()
+    public List<BenchmarkInListUser> Raw_InList_Hundred()
     {
         using var cmd = _connection.CreateCommand();
         cmd.CommandText = _prebuiltSql100;
         for (var i = 0; i < 100; i++)
             cmd.Parameters.AddWithValue($"@p{i}", _hundredItems[i]);
         using var reader = cmd.ExecuteReader();
-        var results = new List<User>();
+        var results = new List<BenchmarkInListUser>();
         while (reader.Read())
-            results.Add(new User(reader.GetInt64(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2)));
+            results.Add(new BenchmarkInListUser(reader.GetInt64(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2)));
         return results;
     }
 
     [Benchmark(Description = "Dapper: IN 100")]
-    public List<User> Dapper_InList_Hundred()
+    public List<BenchmarkInListUser> Dapper_InList_Hundred()
     {
-        return _connection.Query<User>(
+        return _connection.Query<BenchmarkInListUser>(
             "SELECT id, name, email FROM users WHERE id IN @ids",
             new { ids = _hundredItemsList }).ToList();
     }
 
     [Benchmark(Description = "StringThing: IN 100")]
-    public List<User> StringThing_InList_Hundred()
+    public List<BenchmarkInListUser> StringThing_InList_Hundred()
     {
-        return _connection.QueryString<User>(
+        return _connection.QueryString<BenchmarkInListUser>(
             $"SELECT id, name, email FROM users WHERE id IN {SqliteSql.InList([.. _hundredItems])}").ToList();
     }
 }

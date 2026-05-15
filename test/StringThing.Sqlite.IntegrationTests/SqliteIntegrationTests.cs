@@ -1,8 +1,43 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Common;
 using Microsoft.Data.Sqlite;
+using StringThing.Aot;
 using StringThing.UnsafeSql;
 using Xunit;
 
 namespace StringThing.Sqlite.IntegrationTests;
+
+[StringThingRow]
+public partial record RowUser(long Id, string Name, string? Email);
+
+[StringThingRow]
+public partial class RowUserMutable
+{
+    public long Id { get; set; }
+    public string Name { get; set; } = "";
+    public string? Email { get; set; }
+}
+
+[StringThingRow]
+public partial record RowUserWithColumn(
+    [property: Column("id")] long UserId,
+    [property: Column("name")] string FullName,
+    [property: Column("email")] string? EmailAddress);
+
+public sealed class HandRolledUserStatus : IStringThingRow<HandRolledUserStatus>
+{
+    public long Id { get; init; }
+    public string Status { get; init; } = "";
+
+    private static readonly string[] _columns = ["id", "email"];
+    public static ReadOnlySpan<string> ColumnBindingOrder => _columns;
+
+    public static HandRolledUserStatus Read(DbDataReader reader, ReadOnlySpan<int> ordinals) => new()
+    {
+        Id = reader.GetInt64(ordinals[0]),
+        Status = reader.IsDBNull(ordinals[1]) ? "no-email" : "has-email",
+    };
+}
 
 public class SqliteIntegrationTests
 {
@@ -195,5 +230,141 @@ public class SqliteIntegrationTests
         while (reader.Read())
             names.Add(reader.GetString(0));
         Assert.Equal(["eve", "frank", "grace"], names);
+    }
+
+    // --- AOT-generated row mapping ([StringThingRow]) ---
+
+    [Fact]
+    public void QueryStringSingle_WithGeneratedRecord_MapsRow()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+        var userId = 1;
+
+        // Act
+        var user = connection.QueryStringSingle<RowUser>(
+            $"SELECT id AS Id, name AS Name, email AS Email FROM users WHERE id = {userId}");
+
+        // Assert
+        Assert.Equal(1, user.Id);
+        Assert.Equal("alice", user.Name);
+        Assert.Equal("alice@example.com", user.Email);
+    }
+
+    [Fact]
+    public void QueryString_WithGeneratedRecord_MapsMultipleRows()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+        var maxId = 3;
+
+        // Act
+        var users = connection.QueryString<RowUser>(
+            $"SELECT id AS Id, name AS Name, email AS Email FROM users WHERE id <= {maxId} ORDER BY id");
+
+        // Assert
+        Assert.Equal(3, users.Count);
+        Assert.Equal("alice", users[0].Name);
+        Assert.Null(users[1].Email);
+    }
+
+    [Fact]
+    public void QueryString_WithShuffledSelectOrder_ResolvesByName()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+        var userId = 1;
+
+        // Act
+        var user = connection.QueryStringSingle<RowUser>(
+            $"SELECT email AS Email, id AS Id, name AS Name FROM users WHERE id = {userId}");
+
+        // Assert
+        Assert.Equal(1, user.Id);
+        Assert.Equal("alice", user.Name);
+        Assert.Equal("alice@example.com", user.Email);
+    }
+
+    [Fact]
+    public void QueryString_WithMutableClass_PopulatesSetters()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+        var userId = 3;
+
+        // Act
+        var user = connection.QueryStringSingle<RowUserMutable>(
+            $"SELECT id AS Id, name AS Name, email AS Email FROM users WHERE id = {userId}");
+
+        // Assert
+        Assert.Equal(3, user.Id);
+        Assert.Equal("carol", user.Name);
+        Assert.Equal("carol@example.com", user.Email);
+    }
+
+    [Fact]
+    public void QueryString_WithColumnAttribute_HonorsOverride()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+        var userId = 1;
+
+        // Act
+        var user = connection.QueryStringSingle<RowUserWithColumn>(
+            $"SELECT id, name, email FROM users WHERE id = {userId}");
+
+        // Assert
+        Assert.Equal(1, user.UserId);
+        Assert.Equal("alice", user.FullName);
+        Assert.Equal("alice@example.com", user.EmailAddress);
+    }
+
+    [Fact]
+    public void QueryStringSingleOrDefault_WithNoMatch_ReturnsNull()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+        var userId = 999;
+
+        // Act
+        var user = connection.QueryStringSingleOrDefault<RowUser>(
+            $"SELECT id AS Id, name AS Name, email AS Email FROM users WHERE id = {userId}");
+
+        // Assert
+        Assert.Null(user);
+    }
+
+    // --- Hand-rolled IStringThingRow<T> (Model C — escape hatch when the generator can't be used) ---
+
+    [Fact]
+    public void QueryStringSingle_WithHandRolledRow_DerivesStatusFromEmail()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+        var userId = 1;
+
+        // Act
+        var user = connection.QueryStringSingle<HandRolledUserStatus>(
+            $"SELECT id, email FROM users WHERE id = {userId}");
+
+        // Assert
+        Assert.Equal(1, user.Id);
+        Assert.Equal("has-email", user.Status);
+    }
+
+    [Fact]
+    public void QueryStringSingle_WithHandRolledRow_DerivesStatusFromNullEmail()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+        var userId = 2;
+
+        // Act
+        var user = connection.QueryStringSingle<HandRolledUserStatus>(
+            $"SELECT id, email FROM users WHERE id = {userId}");
+
+        // Assert
+        Assert.Equal(2, user.Id);
+        Assert.Equal("no-email", user.Status);
     }
 }

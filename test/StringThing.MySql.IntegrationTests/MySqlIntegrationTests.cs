@@ -1,8 +1,43 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.Common;
 using MySqlConnector;
+using StringThing.Aot;
 using StringThing.UnsafeSql;
 using Xunit;
 
 namespace StringThing.MySql.IntegrationTests;
+
+[StringThingRow]
+public partial record MySqlRowUser(int Id, string Name, string? Email);
+
+[StringThingRow]
+public partial record MySqlRowUserWithColumn(
+    [property: Column("id")] int UserId,
+    [property: Column("name")] string FullName,
+    [property: Column("email")] string? EmailAddress);
+
+[StringThingRow]
+public partial class MySqlRowUserMutable
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string? Email { get; set; }
+}
+
+public sealed class MySqlHandRolledUserStatus : IStringThingRow<MySqlHandRolledUserStatus>
+{
+    public int Id { get; init; }
+    public string Status { get; init; } = "";
+
+    private static readonly string[] _columns = ["id", "email"];
+    public static ReadOnlySpan<string> ColumnBindingOrder => _columns;
+
+    public static MySqlHandRolledUserStatus Read(DbDataReader reader, ReadOnlySpan<int> ordinals) => new()
+    {
+        Id = reader.GetInt32(ordinals[0]),
+        Status = reader.IsDBNull(ordinals[1]) ? "no-email" : "has-email",
+    };
+}
 
 public class MySqlIntegrationTests(MySqlFixture mySql) : IClassFixture<MySqlFixture>, IAsyncLifetime
 {
@@ -213,5 +248,117 @@ public class MySqlIntegrationTests(MySqlFixture mySql) : IClassFixture<MySqlFixt
         Assert.Equal("frank", results[1].Name);
         Assert.Null(results[1].Email);
         Assert.Equal("grace", results[2].Name);
+    }
+
+    // --- AOT-generated row mapping ([StringThingRow]) ---
+
+    [Fact]
+    public async Task QueryStringSingleAsync_WithGeneratedRecord_MapsRow()
+    {
+        // Arrange
+        await using var connection = new MySqlConnection(mySql.ConnectionString);
+        await connection.OpenAsync(CancellationToken);
+        var userId = 1;
+
+        // Act
+        var user = await connection.QueryStringSingleAsync<MySqlRowUser>(
+            $"SELECT id AS Id, name AS Name, email AS Email FROM users WHERE id = {userId}",
+            CancellationToken);
+
+        // Assert
+        Assert.Equal(1, user.Id);
+        Assert.Equal("alice", user.Name);
+        Assert.Equal("alice@example.com", user.Email);
+    }
+
+    [Fact]
+    public async Task QueryStringAsync_WithGeneratedRecord_MapsMultipleRows()
+    {
+        // Arrange
+        await using var connection = new MySqlConnection(mySql.ConnectionString);
+        await connection.OpenAsync(CancellationToken);
+        var maxId = 3;
+
+        // Act
+        var users = await connection.QueryStringAsync<MySqlRowUser>(
+            $"SELECT id AS Id, name AS Name, email AS Email FROM users WHERE id <= {maxId} ORDER BY id",
+            CancellationToken);
+
+        // Assert
+        Assert.Equal(3, users.Count);
+        Assert.Null(users[1].Email);
+    }
+
+    [Fact]
+    public async Task QueryStringAsync_WithMutableClass_PopulatesSetters()
+    {
+        // Arrange
+        await using var connection = new MySqlConnection(mySql.ConnectionString);
+        await connection.OpenAsync(CancellationToken);
+        var userId = 3;
+
+        // Act
+        var user = await connection.QueryStringSingleAsync<MySqlRowUserMutable>(
+            $"SELECT id AS Id, name AS Name, email AS Email FROM users WHERE id = {userId}",
+            CancellationToken);
+
+        // Assert
+        Assert.Equal("carol", user.Name);
+    }
+
+    [Fact]
+    public async Task QueryStringAsync_WithColumnAttribute_HonorsOverride()
+    {
+        // Arrange
+        await using var connection = new MySqlConnection(mySql.ConnectionString);
+        await connection.OpenAsync(CancellationToken);
+        var userId = 1;
+
+        // Act
+        var user = await connection.QueryStringSingleAsync<MySqlRowUserWithColumn>(
+            $"SELECT id, name, email FROM users WHERE id = {userId}",
+            CancellationToken);
+
+        // Assert
+        Assert.Equal(1, user.UserId);
+        Assert.Equal("alice", user.FullName);
+    }
+
+    // --- Hand-rolled IStringThingRow<T> (Model C — escape hatch when the generator can't be used) ---
+
+    [Fact]
+    public async Task QueryStringSingleAsync_WithHandRolledRow_DerivesStatusFromEmail()
+    {
+        // Arrange
+        await using var connection = new MySqlConnection(mySql.ConnectionString);
+        await connection.OpenAsync(CancellationToken);
+        var userId = 1;
+
+        // Act
+        var user = await connection.QueryStringSingleAsync<MySqlHandRolledUserStatus>(
+            $"SELECT id, email FROM users WHERE id = {userId}",
+            CancellationToken);
+
+        // Assert
+        Assert.Equal(1, user.Id);
+        Assert.Equal("has-email", user.Status);
+    }
+
+    [Fact]
+    public async Task QueryStringSingleAsync_WithHandRolledRow_DerivesStatusFromNullEmail()
+    {
+        // Arrange
+        await using var connection = new MySqlConnection(mySql.ConnectionString);
+        await connection.OpenAsync(CancellationToken);
+        var userId = 2;
+
+        // Act
+        var user = await connection.QueryStringSingleAsync<MySqlHandRolledUserStatus>(
+            $"SELECT id, email FROM users WHERE id = {userId}",
+            CancellationToken);
+
+        // Assert
+        Assert.Equal(2, user.Id);
+        Assert.Equal("no-email", user.Status);
     }
 }

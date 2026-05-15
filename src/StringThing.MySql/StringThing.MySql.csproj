@@ -4,7 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Description>Injection-safe interpolated SQL for MySQL via MySqlConnector. Typed parameters, unsigned integer support. Includes Roslyn analyzer.</Description>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Injection-safe interpolated SQL for MySQL via MySqlConnector. AOT-compatible result mapping via source-generated row materializers. Typed parameters, unsigned integer support. Includes Roslyn analyzer.</Description>
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/src/StringThing.MySql</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>

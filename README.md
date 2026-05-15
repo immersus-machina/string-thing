@@ -26,6 +26,7 @@ One package per provider. No string overload — the only path is `$"..."`.
 - **Parameter deduplication.** `$"WHERE a = {x} OR b = {x}"` produces one parameter. By variable identity, not value.
 - **Composable fragments.** Build `WHERE` clauses as typed fragments. Splice them in. Parameters renumber automatically.
 - **Multi-row inserts.** `InsertRows` for VALUES composition, TVPs for SQL Server.
+- **AOT-compatible result mapping.** Mark POCOs with `[StringThingRow] partial` and a source generator emits the row materializer at compile time. No reflection, no IL emit — runs under `PublishAot`.
 
 ## Provider depth
 
@@ -49,7 +50,7 @@ All providers share: injection safety, parameter deduplication, composable fragm
 | `StringThing.MySql` | MySqlConnector |
 | `StringThing.Sqlite` | Microsoft.Data.Sqlite |
 
-Each provider has a `.Dapper` companion package that adds Dapper result mapping with internalized Dapper (not exposed as a dependency).
+Each provider includes AOT-compatible result mapping. Annotate row POCOs with `[StringThingRow] partial` and call `connection.QueryString<T>($"...")` — a source generator emits the materializer. See each provider's README for details.
 
 ## Performance
 
@@ -59,19 +60,21 @@ Benchmarked against raw ADO.NET and Dapper on SQLite in-memory. Queries return o
 
 | Scenario | Dapper | StringThing | ST vs Dapper |
 |----------|--------|-------------|--------------|
-| QuerySingle 1 param | +1.03 us / +0.68 KB | +0.99 us / +0.60 KB | ~same time, -12% alloc |
-| Query 2 params | +1.20 us / +0.89 KB | +1.09 us / +0.60 KB | -9% time, -33% alloc |
-| Query 5 params | +1.64 us / +1.54 KB | +1.04 us / +0.62 KB | -37% time, -60% alloc |
-| Execute insert | +0.81 us / +1.12 KB | +0.23 us / +0.20 KB | -72% time, -82% alloc |
+| QuerySingle 1 param | +1.03 us / +0.68 KB | +0.92 us / +1.41 KB | -11% time, +107% alloc |
+| Query 2 params | +1.20 us / +0.89 KB | +0.72 us / +1.41 KB | -40% time, +58% alloc |
+| Query 5 params | +1.64 us / +1.54 KB | +0.68 us / +1.44 KB | -59% time, -6% alloc |
+| Execute insert | +0.81 us / +1.12 KB | +0.12 us / +0.20 KB | -85% time, -82% alloc |
 
 ### IN list overhead
 
 | Scenario | Dapper | StringThing | ST vs Dapper |
 |----------|--------|-------------|--------------|
-| IN 10 items | +3.84 us / +3.87 KB | +2.55 us / +3.99 KB | -34% time |
-| IN 100 items | +72.83 us / +28.23 KB | +14.79 us / +26.86 KB | -80% time |
+| IN 10 items | +3.84 us / +3.87 KB | +2.35 us / +4.13 KB | -39% time |
+| IN 100 items | +72.83 us / +28.23 KB | +10.32 us / +24.90 KB | -86% time |
 
-StringThing is faster than Dapper on every measured scenario after subtracting the raw ADO.NET cost, with consistently lower allocations (no anonymous object reflection). The gap widens on parameter-heavy paths — a 5-param query has 60% less allocation overhead, and an `Execute` insert has 72% less time overhead. IN list expansion pulls the furthest ahead — Dapper rewrites the SQL string at runtime, StringThing builds the parameterized list directly.
+StringThing is faster than Dapper on every measured scenario after subtracting the raw ADO.NET cost. The time gap widens on parameter-heavy paths — a 5-param query has 59% less time overhead, and an `Execute` insert has 85% less. IN list expansion pulls the furthest ahead: Dapper rewrites the SQL string at runtime, StringThing builds the parameterized list directly, finishing at 86% less time on a 100-item list.
+
+Allocation is a mixed picture. `Execute` and `IN list` paths match or beat Dapper. Read queries that go through the source-generated row mapper allocate ~0.8 KB more per query than Dapper — an `int[]` for resolved ordinals plus driver-internal overhead that Dapper amortizes via its cached materializer delegate. For workloads up to ~10K queries/sec this is well within Gen0 GC handling.
 
 Benchmark source: [EndToEndBenchmarks.cs](benchmarks/StringThing.Benchmarks/EndToEndBenchmarks.cs), [InListBenchmarks.cs](benchmarks/StringThing.Benchmarks/InListBenchmarks.cs), [CommandCreationBenchmarks.cs](benchmarks/StringThing.Benchmarks/CommandCreationBenchmarks.cs)
 

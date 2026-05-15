@@ -6,7 +6,7 @@
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing</PackageProjectUrl>
     <RepositoryUrl>https://github.com/immersus-machina/string-thing.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>sql;parameterization;interpolation;dapper;ado-net;injection-safety</PackageTags>
+    <PackageTags>sql;parameterization;interpolation;ado-net;injection-safety;aot</PackageTags>
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -22,14 +22,21 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(MSBuildProjectName)' != 'StringThing.Analyzers'">
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'StringThing.Analyzers' AND '$(MSBuildProjectName)' != 'StringThing.Aot.Generator'">
     <ProjectReference Include="$(MSBuildThisFileDirectory)src\StringThing.Analyzers\StringThing.Analyzers.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)src\StringThing.Aot.Generator\StringThing.Aot.Generator.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(MSBuildProjectName)' != 'StringThing.Analyzers' AND '$(MSBuildProjectName)' != 'StringThing.Core' AND !$(MSBuildProjectName.EndsWith('Tests'))">
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'StringThing.Analyzers' AND '$(MSBuildProjectName)' != 'StringThing.Aot.Generator' AND '$(MSBuildProjectName)' != 'StringThing.Core' AND !$(MSBuildProjectName.EndsWith('Tests'))">
     <None Include="$(MSBuildThisFileDirectory)src\StringThing.Analyzers\bin\$(Configuration)\netstandard2.0\StringThing.Analyzers.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs"
+          Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)src\StringThing.Aot.Generator\bin\$(Configuration)\netstandard2.0\StringThing.Aot.Generator.dll"
           Pack="true"
           PackagePath="analyzers/dotnet/cs"
           Visible="false" />

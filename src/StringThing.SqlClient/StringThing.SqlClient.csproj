@@ -4,7 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Description>Injection-safe interpolated SQL for SQL Server via Microsoft.Data.SqlClient. Named parameters, TVP support. Includes Roslyn analyzer.</Description>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Description>Injection-safe interpolated SQL for SQL Server via Microsoft.Data.SqlClient. AOT-compatible result mapping via source-generated row materializers. Named parameters, TVP support. Includes Roslyn analyzer.</Description>
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/src/StringThing.SqlClient</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
