@@ -9,8 +9,9 @@ Compile-time type-safe interpolated SQL for .NET. Built on C# 10 interpolated st
 - `src/StringThing.SqlClient/` — `SqlServerSql`, `SqlServerValue` (namespace: `StringThing.SqlClient`)
 - `src/StringThing.MySql/` — `MySql`, `MySqlValue` (namespace: `StringThing.MySql`)
 - `src/StringThing.Sqlite/` — `SqliteSql`, `SqliteValue` (namespace: `StringThing.Sqlite`)
-- `src/StringThing.*.Dapper/` — Dapper result mapping extensions per provider
+- `src/StringThing.Core/Aot/` — `IStringThingRow<TSelf>` interface and `[StringThingRow]` attribute (namespace: `StringThing.Aot`); each provider's `<Provider>ResultExtensions.cs` houses `QueryString<T>`, `ExecuteString`, etc. constrained on `IStringThingRow<T>`
 - `src/StringThing.Analyzers/` — Roslyn analyzer (targets `netstandard2.0`), ships `ST0001`
+- `src/StringThing.Aot.Generator/` — Roslyn incremental source generator (targets `netstandard2.0`), emits `IStringThingRow<T>` implementations for `[StringThingRow]`-marked types. Ships in `analyzers/dotnet/cs/` of each provider package
 - `test/` — one test project per library, xUnit v3, runs via `dotnet run`
 - `benchmarks/StringThing.Benchmarks/` — BenchmarkDotNet, SQLite in-memory
 
