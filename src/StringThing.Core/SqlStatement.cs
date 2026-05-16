@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
 using StringThing.UnsafeSql;
@@ -10,7 +11,9 @@ public abstract class SqlStatement<TNamer, TParameter>
     where TParameter : class
 {
     private static readonly ConcurrentDictionary<(string File, int Line), IBuilderTemplate> _cache = new();
+    private static readonly ConcurrentDictionary<(string File, int Line, Type RowType), int[]> _ordinalCache = new();
 
+    private readonly (string File, int Line) _cacheKey;
     private readonly IStatementBuilder _builder;
     private readonly IReadOnlyList<TParameter> _parameters;
     private string? _resolvedSql;
@@ -21,29 +24,39 @@ public abstract class SqlStatement<TNamer, TParameter>
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0)
     {
-        var cacheKey = (filePath, lineNumber);
+        _cacheKey = (filePath, lineNumber);
 
         if (formattedCount == 0)
         {
             _parameters = Array.Empty<TParameter>();
-            if (_cache.TryGetValue(cacheKey, out var template))
+            if (_cache.TryGetValue(_cacheKey, out var template))
                 _builder = template.CreateBuilder(null!);
             else
-                _builder = new ZeroParamFreshBuilder(cacheKey);
+                _builder = new ZeroParamFreshBuilder(_cacheKey);
             return;
         }
 
         var parameterList = new List<TParameter>(formattedCount);
         _parameters = parameterList;
 
-        if (_cache.TryGetValue(cacheKey, out var nonZeroTemplate))
+        if (_cache.TryGetValue(_cacheKey, out var nonZeroTemplate))
         {
             _builder = nonZeroTemplate.CreateBuilder(parameterList);
         }
         else
         {
-            _builder = new FreshBuilder(cacheKey, parameterList);
+            _builder = new FreshBuilder(_cacheKey, parameterList);
         }
+    }
+
+    internal bool TryGetCachedOrdinals(Type rowType, [NotNullWhen(true)] out int[]? ordinals)
+    {
+        return _ordinalCache.TryGetValue((_cacheKey.File, _cacheKey.Line, rowType), out ordinals);
+    }
+
+    internal void CacheOrdinals(Type rowType, int[] ordinals)
+    {
+        _ordinalCache[(_cacheKey.File, _cacheKey.Line, rowType)] = ordinals;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
