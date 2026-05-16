@@ -14,8 +14,8 @@ dotnet add package StringThing.Sqlite
 
 ```csharp
 var userId = 42;
-SqliteSql stmt = $"SELECT name FROM users WHERE id = {userId}";
-using var command = stmt.ToCommand(connection);
+SqliteSql statement = $"SELECT name FROM users WHERE id = {userId}";
+using var command = statement.ToCommand(connection);
 ```
 
 Parameters are named automatically using the variable name: `@userId`, not `@p0`.
@@ -88,7 +88,7 @@ var minAge = 18;
 var status = "active";
 SqliteFragment filter = $"age >= {minAge} AND status = {status}";
 
-SqliteSql stmt = $"SELECT * FROM users WHERE {filter}";
+SqliteSql statement = $"SELECT * FROM users WHERE {filter}";
 ```
 
 ## Multi-row insert
@@ -100,14 +100,14 @@ record InsertUser(int Id, string Name, string? Email) : ISqliteRow
 }
 
 var users = new InsertUser[] { new(1, "alice", "alice@example.com"), new(2, "bob", null) };
-SqliteSql stmt = $"INSERT INTO users (id, name, email) VALUES {SqliteSql.InsertRows(users)}";
+SqliteSql statement = $"INSERT INTO users (id, name, email) VALUES {SqliteSql.InsertRows(users)}";
 ```
 
 ## IN list
 
 ```csharp
 var ids = new List<int> { 1, 2, 3 };
-SqliteSql stmt = $"SELECT * FROM users WHERE id IN {SqliteSql.InList([.. ids])}";
+SqliteSql statement = $"SELECT * FROM users WHERE id IN {SqliteSql.InList([.. ids])}";
 ```
 
 ## Unsafe escape hatch
@@ -116,7 +116,7 @@ SqliteSql stmt = $"SELECT * FROM users WHERE id IN {SqliteSql.InList([.. ids])}"
 using StringThing.UnsafeSql;
 
 var tableName = Sql.Unsafe("users");
-SqliteSql stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
+SqliteSql statement = $"SELECT * FROM {tableName} WHERE id = {userId}";
 ```
 
 ---

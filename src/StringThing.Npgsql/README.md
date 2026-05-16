@@ -12,8 +12,8 @@ dotnet add package StringThing.Npgsql
 
 ```csharp
 var userId = 42;
-PostgresSql stmt = $"SELECT name FROM users WHERE id = {userId}";
-await using var command = stmt.ToCommand(dataSource);
+PostgresSql statement = $"SELECT name FROM users WHERE id = {userId}";
+await using var command = statement.ToCommand(dataSource);
 ```
 
 ## Result mapping
@@ -81,7 +81,7 @@ var minAge = 18;
 var status = "active";
 PostgresFragment filter = $"age >= {minAge} AND status = {status}";
 
-PostgresSql stmt = $"SELECT * FROM users WHERE {filter}";
+PostgresSql statement = $"SELECT * FROM users WHERE {filter}";
 ```
 
 Fragments compose. Parameters renumber automatically across fragment boundaries.
@@ -95,7 +95,7 @@ record InsertUser(int Id, string Name, string? Email) : IPostgresRow
 }
 
 var users = new InsertUser[] { new(1, "alice", "alice@example.com"), new(2, "bob", null) };
-PostgresSql stmt = $"INSERT INTO users (id, name, email) VALUES {PostgresSql.InsertRows(users)}";
+PostgresSql statement = $"INSERT INTO users (id, name, email) VALUES {PostgresSql.InsertRows(users)}";
 ```
 
 ## JSON
@@ -108,14 +108,14 @@ record UserData(string Name, int Age) : IPostgresJson
     public string ToJson() => $$"""{"name":"{{Name}}","age":{{Age}}}""";
 }
 
-PostgresSql stmt = $"INSERT INTO data (payload) VALUES ({userData})";
+PostgresSql statement = $"INSERT INTO data (payload) VALUES ({userData})";
 ```
 
 ## Unsafe escape hatch
 
 ```csharp
 var tableName = Sql.Unsafe("users");
-PostgresSql stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
+PostgresSql statement = $"SELECT * FROM {tableName} WHERE id = {userId}";
 ```
 
 ---

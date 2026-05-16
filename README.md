@@ -2,7 +2,7 @@
 
 Interpolated SQL parameterization for .NET — injection-safe by construction, with per-provider type checking where the provider supports it.
 
-Built on C# interpolated string handlers. The compiler resolves every `{parameter}` at build time, not runtime.
+Built on C# interpolated string handlers. The compiler binds every `{parameter}` to a typed parameter at build time, with no string concatenation.
 
 ## The idea
 
@@ -11,10 +11,10 @@ var userId = 42;
 var threshold = TimeSpan.FromHours(36);
 
 // Postgres — TimeSpan maps to interval, any duration works
-PostgresSql stmt = $"SELECT * FROM jobs WHERE user_id = {userId} AND elapsed > {threshold}";
+PostgresSql statement = $"SELECT * FROM jobs WHERE user_id = {userId} AND elapsed > {threshold}";
 
 // SQL Server — named parameters automatically
-SqlServerSql stmt = $"SELECT * FROM jobs WHERE user_id = {userId} AND elapsed > {threshold}";
+SqlServerSql statement = $"SELECT * FROM jobs WHERE user_id = {userId} AND elapsed > {threshold}";
 // produces: ... WHERE user_id = @userId AND elapsed > @threshold
 ```
 
@@ -39,7 +39,7 @@ Not all providers deliver the same depth of type checking. The depth depends on 
 | **MySQL** | Moderate | 22 types mapped to specific `MySqlDbType`. Unsigned integer support. |
 | **SQLite** | Light | SQLite is dynamically typed — all values are stored as TEXT, INTEGER, REAL, BLOB, or NULL. The type contract is thin. The value is injection safety and parameterization ergonomics, not type checking. |
 
-All providers share: injection safety, parameter deduplication, composable fragments, and multi-row inserts.
+All providers share: injection safety, parameter deduplication, composable fragments, multi-row inserts, and AOT-compatible result mapping.
 
 ## Packages
 
@@ -54,7 +54,7 @@ Each provider includes AOT-compatible result mapping. Annotate row POCOs with `[
 
 ## Performance
 
-Benchmarked against raw ADO.NET and Dapper on SQLite in-memory. Queries return one row (`LIMIT 1`) to isolate parameter binding overhead from result set materialization. Raw ADO.NET subtracted to show pure library overhead.
+Benchmarked against raw ADO.NET and Dapper on SQLite in-memory. Queries return one row (`LIMIT 1`) to keep materialization cost a small, constant baseline across implementations. Raw ADO.NET subtracted to show pure library overhead.
 
 ### Query and insert overhead
 
@@ -76,7 +76,7 @@ StringThing is faster than Dapper and allocates less on every measured scenario 
 
 The source-generated row mapper resolves column ordinals once per call site and caches them, so subsequent queries skip all name→ordinal lookups — the dominant per-row allocation cost on most drivers.
 
-Benchmark source: [EndToEndBenchmarks.cs](benchmarks/StringThing.Benchmarks/EndToEndBenchmarks.cs), [InListBenchmarks.cs](benchmarks/StringThing.Benchmarks/InListBenchmarks.cs), [CommandCreationBenchmarks.cs](benchmarks/StringThing.Benchmarks/CommandCreationBenchmarks.cs)
+Benchmark source: [EndToEndBenchmarks.cs](benchmarks/StringThing.Benchmarks/EndToEndBenchmarks.cs), [InListBenchmarks.cs](benchmarks/StringThing.Benchmarks/InListBenchmarks.cs), [CommandCreationBenchmarks.cs](benchmarks/StringThing.Benchmarks/CommandCreationBenchmarks.cs), [InsertRowsBenchmarks.cs](benchmarks/StringThing.Benchmarks/InsertRowsBenchmarks.cs)
 
 ## Analyzer
 
@@ -90,12 +90,12 @@ StringThing caches interpolated string templates by source location. Two SQL sta
 
 ```csharp
 // ST0001 — move to separate lines
-var stmt = condition ? (PostgresSql)$"SELECT {x}" : (PostgresSql)$"SELECT {y}";
+PostgresSql statement = condition ? $"SELECT {x}" : $"SELECT {y}";
 
 // OK
-var stmt = condition
-    ? (PostgresSql)$"SELECT {x}"
-    : (PostgresSql)$"SELECT {y}";
+PostgresSql statement = condition
+    ? $"SELECT {x}"
+    : $"SELECT {y}";
 ```
 
 The analyzer is included automatically when you reference any StringThing package.
@@ -103,6 +103,8 @@ The analyzer is included automatically when you reference any StringThing packag
 ## Caching
 
 StringThing caches the SQL template for each call site after the first execution, keyed on `CallerFilePath` + `CallerLineNumber`. Subsequent calls at the same site skip all string building and parameter name resolution. Cache entries are never evicted — the total number is bounded by the number of unique SQL statements in your compiled code, not by runtime behavior. Each entry is roughly the size of the SQL string plus a small array for parameter metadata.
+
+When using `QueryString<T>`, resolved column ordinals are also cached per `(call site, T)`, so name → ordinal lookups run only once per source location and row type.
 
 ## What it is not
 

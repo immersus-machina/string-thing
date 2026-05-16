@@ -12,8 +12,8 @@ dotnet add package StringThing.SqlClient
 
 ```csharp
 var userId = 42;
-SqlServerSql stmt = $"SELECT name FROM users WHERE id = {userId}";
-await using var command = stmt.ToCommand(connection);
+SqlServerSql statement = $"SELECT name FROM users WHERE id = {userId}";
+await using var command = statement.ToCommand(connection);
 ```
 
 Parameters are named automatically using the variable name: `@userId`, not `@p0`.
@@ -98,7 +98,7 @@ var minAge = 18;
 var status = "active";
 SqlServerFragment filter = $"age >= {minAge} AND status = {status}";
 
-SqlServerSql stmt = $"SELECT * FROM users WHERE {filter}";
+SqlServerSql statement = $"SELECT * FROM users WHERE {filter}";
 ```
 
 ## Multi-row insert
@@ -110,14 +110,14 @@ record InsertUser(int Id, string Name, string? Email) : ISqlServerRow
 }
 
 var users = new InsertUser[] { new(1, "alice", "alice@example.com"), new(2, "bob", null) };
-SqlServerSql stmt = $"INSERT INTO users (id, name, email) VALUES {SqlServerSql.InsertRows(users)}";
+SqlServerSql statement = $"INSERT INTO users (id, name, email) VALUES {SqlServerSql.InsertRows(users)}";
 ```
 
 ## IN list
 
 ```csharp
 var ids = new List<int> { 1, 2, 3 };
-SqlServerSql stmt = $"SELECT * FROM users WHERE id IN {SqlServerSql.InList([.. ids])}";
+SqlServerSql statement = $"SELECT * FROM users WHERE id IN {SqlServerSql.InList([.. ids])}";
 // produces: SELECT * FROM users WHERE id IN (@p0, @p1, @p2)
 ```
 
@@ -130,7 +130,7 @@ table.Columns.Add("name", typeof(string));
 table.Rows.Add(1, "alice");
 table.Rows.Add(2, "bob");
 
-SqlServerSql stmt = $"INSERT INTO users SELECT * FROM {SqlServerSql.Table(table, "dbo.UserTableType")}";
+SqlServerSql statement = $"INSERT INTO users SELECT * FROM {SqlServerSql.Table(table, "dbo.UserTableType")}";
 ```
 
 Requires a matching type defined on the server (`CREATE TYPE dbo.UserTableType AS TABLE (...)`).
@@ -139,17 +139,17 @@ Requires a matching type defined on the server (`CREATE TYPE dbo.UserTableType A
 
 ```csharp
 // VarChar instead of default NVarChar
-SqlServerSql stmt = $"WHERE code = {SqlServerSql.VarChar(code)}";
+SqlServerSql statement = $"WHERE code = {SqlServerSql.VarChar(code)}";
 
 // Legacy DateTime instead of default DateTime2
-SqlServerSql stmt = $"WHERE created < {SqlServerSql.DateTime(date)}";
+SqlServerSql statement = $"WHERE created < {SqlServerSql.DateTime(date)}";
 ```
 
 ## Unsafe escape hatch
 
 ```csharp
 var tableName = Sql.Unsafe("users");
-SqlServerSql stmt = $"SELECT * FROM {tableName} WHERE id = {userId}";
+SqlServerSql statement = $"SELECT * FROM {tableName} WHERE id = {userId}";
 ```
 
 ---
