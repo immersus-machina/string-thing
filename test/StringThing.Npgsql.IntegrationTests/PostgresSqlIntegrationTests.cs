@@ -463,4 +463,78 @@ public class PostgresSqlIntegrationTests(PostgresFixture postgres) : IClassFixtu
         Assert.Equal(2, user.Id);
         Assert.Equal("no-email", user.Status);
     }
+
+    // --- Scalar result mapping (language primitives, not row types) ---
+
+    [Fact]
+    public async Task QueryStringSingleAsync_WithScalarLong_ReadsColumnZero()
+    {
+        // Arrange
+        await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
+
+        // Act
+        var count = await connection.QueryStringSingleAsync<long>(
+            $"SELECT COUNT(*) FROM users WHERE id <= 3", CancellationToken);
+
+        // Assert
+        Assert.Equal(3, count);
+    }
+
+    [Fact]
+    public async Task QueryStringAsync_WithScalarString_ReadsEachRowAsValue()
+    {
+        // Arrange
+        await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
+
+        // Act
+        var names = await connection.QueryStringAsync<string>(
+            $"SELECT name FROM users WHERE id <= 3 ORDER BY id", CancellationToken);
+
+        // Assert
+        Assert.Equal(["alice", "bob", "carol"], names);
+    }
+
+    [Fact]
+    public async Task QueryStringSingleAsync_WithNullableScalar_ReturnsNullForDbNull()
+    {
+        // Arrange
+        await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
+        var userId = 2;
+
+        // Act
+        var email = await connection.QueryStringSingleAsync<string?>(
+            $"SELECT email FROM users WHERE id = {userId}", CancellationToken);
+
+        // Assert
+        Assert.Null(email);
+    }
+
+    [Fact]
+    public async Task QueryStringSingleAsync_WithNullableValueScalar_ReturnsValue()
+    {
+        // Arrange
+        await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
+        var userId = 1;
+
+        // Act
+        var id = await connection.QueryStringSingleAsync<int?>(
+            $"SELECT id FROM users WHERE id = {userId}", CancellationToken);
+
+        // Assert
+        Assert.Equal(1, id);
+    }
+
+    [Fact]
+    public async Task QueryStringSingleAsync_WithNullableValueScalar_ReturnsNullForDbNull()
+    {
+        // Arrange
+        await using var connection = await postgres.DataSource.OpenConnectionAsync(CancellationToken);
+
+        // Act
+        var value = await connection.QueryStringSingleAsync<int?>(
+            $"SELECT CAST(NULL AS integer)", CancellationToken);
+
+        // Assert
+        Assert.Null(value);
+    }
 }

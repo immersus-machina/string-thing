@@ -29,3 +29,5 @@ internal sealed class RowColumn
     public required string FullyQualifiedReadType { get; init; }
     public required bool IsNullable { get; init; }
 }
+
+internal sealed record RegistrarModel(string Namespace, string TypeName, string FullyQualifiedTypeName, string HintName);

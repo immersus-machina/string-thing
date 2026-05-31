@@ -44,6 +44,16 @@ connection.ExecuteString(
 
 The full surface: `QueryString<T>`, `QueryStringFirst<T>`, `QueryStringFirstOrDefault<T>`, `QueryStringSingle<T>`, `QueryStringSingleOrDefault<T>`, `ExecuteString`, `ExecuteStringScalar` (+ `T` overload), plus `Async` variants. Column ordinals are resolved once per query; rows are then read by ordinal — name-based binding without per-row name lookup.
 
+Scalar columns map directly. When `T` is a supported scalar type rather than a `[StringThingRow]` type, the query reads its first column into that value — no row type or wrapper needed:
+
+```csharp
+var ids = connection.QueryString<int>($"SELECT id FROM users ORDER BY id");
+var name = connection.QueryStringSingle<string>($"SELECT name FROM users WHERE id = {id}");
+var email = connection.QueryStringSingle<string?>($"SELECT email FROM users WHERE id = {id}");
+```
+
+Nullable scalars read `NULL` as `null`/`default`. A `T` that is neither a supported scalar nor a `[StringThingRow]` type is a compile error (`ST0002`).
+
 Override the column name with `[Column]` from `System.ComponentModel.DataAnnotations.Schema`:
 
 ```csharp

@@ -26,7 +26,7 @@ One package per provider. No string overload — the only path is `$"..."`.
 - **Parameter deduplication.** `$"WHERE a = {x} OR b = {x}"` produces one parameter. By variable identity, not value.
 - **Composable fragments.** Build `WHERE` clauses as typed fragments. Splice them in. Parameters renumber automatically.
 - **Multi-row inserts.** `InsertRows` for VALUES composition, TVPs for SQL Server.
-- **AOT-compatible result mapping.** Mark POCOs with `[StringThingRow] partial` and a source generator emits the row materializer at compile time. No reflection, no IL emit — runs under `PublishAot`.
+- **AOT-compatible result mapping.** Mark POCOs with `[StringThingRow] partial` and a source generator emits the row materializer at compile time. No reflection, no IL emit — runs under `PublishAot`. Scalar columns (`int`, `string`, `Guid`, …) map directly through the same `QueryString<T>` calls — no row type needed.
 
 ## Provider depth
 
@@ -80,11 +80,12 @@ Benchmark source: [EndToEndBenchmarks.cs](benchmarks/StringThing.Benchmarks/EndT
 
 ## Analyzer
 
-StringThing ships a Roslyn analyzer that runs in your IDE and at build time. One rule:
+StringThing ships a Roslyn analyzer that runs in your IDE and at build time:
 
 | ID | Severity | Description |
 |----|----------|-------------|
 | ST0001 | Error | Multiple interpolated SQL statements on the same source line |
+| ST0002 | Error | `QueryString<T>` called with a `T` that is neither a supported scalar nor a `[StringThingRow]` type |
 
 StringThing caches interpolated string templates by source location. Two SQL statements on the same line share a cache key, which causes silent incorrect parameter binding. The analyzer prevents this at compile time.
 

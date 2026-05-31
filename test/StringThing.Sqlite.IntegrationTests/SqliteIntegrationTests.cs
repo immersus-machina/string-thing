@@ -334,6 +334,86 @@ public class SqliteIntegrationTests
         Assert.Null(user);
     }
 
+    // --- Scalar result mapping (language primitives, not row types) ---
+
+    [Fact]
+    public void QueryStringSingle_WithScalarLong_ReadsColumnZero()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+
+        // Act
+        var count = connection.QueryStringSingle<long>($"SELECT COUNT(*) FROM users");
+
+        // Assert
+        Assert.Equal(3, count);
+    }
+
+    [Fact]
+    public void QueryString_WithScalarString_ReadsEachRowAsValue()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+
+        // Act
+        var names = connection.QueryString<string>($"SELECT name FROM users ORDER BY id");
+
+        // Assert
+        Assert.Equal(["alice", "bob", "carol"], names);
+    }
+
+    [Fact]
+    public void QueryStringSingle_WithNullableScalar_ReturnsNullForDbNull()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+        var userId = 2;
+
+        // Act
+        var email = connection.QueryStringSingle<string?>(
+            $"SELECT email FROM users WHERE id = {userId}");
+
+        // Assert
+        Assert.Null(email);
+    }
+
+    [Fact]
+    public void QueryStringSingle_WithNullableValueScalar_ReturnsValue()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+        var userId = 1;
+
+        // Act
+        var active = connection.QueryStringSingle<int?>(
+            $"SELECT active FROM users WHERE id = {userId}");
+
+        // Assert
+        Assert.Equal(1, active);
+    }
+
+    [Fact]
+    public void QueryStringSingle_WithNullableValueScalar_ReturnsNullForDbNull()
+    {
+        // Act
+        using var connection = CreateDatabase();
+        var value = connection.QueryStringSingle<int?>($"SELECT CAST(NULL AS INTEGER)");
+
+        // Assert
+        Assert.Null(value);
+    }
+
+    [Fact]
+    public void QueryStringSingle_WithNonNullableValueScalar_ThrowsOnDbNull()
+    {
+        // Arrange
+        using var connection = CreateDatabase();
+
+        // Act + Assert
+        Assert.ThrowsAny<Exception>(() =>
+            connection.QueryStringSingle<int>($"SELECT CAST(NULL AS INTEGER)"));
+    }
+
     // --- Hand-rolled IStringThingRow<T> (Model C — escape hatch when the generator can't be used) ---
 
     [Fact]

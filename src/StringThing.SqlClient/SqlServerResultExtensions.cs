@@ -9,7 +9,6 @@ public static class SqlServerResultExtensions
     public static List<T> QueryString<T>(
         this SqlConnection connection,
         SqlServerSql statement)
-        where T : IStringThingRow<T>
     {
         using var command = statement.ToCommand(connection);
         using var reader = command.ExecuteReader();
@@ -20,7 +19,6 @@ public static class SqlServerResultExtensions
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
-        where T : IStringThingRow<T>
     {
         await using var command = statement.ToCommand(connection);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -30,68 +28,63 @@ public static class SqlServerResultExtensions
     public static T QueryStringFirst<T>(
         this SqlConnection connection,
         SqlServerSql statement)
-        where T : IStringThingRow<T>
     {
         using var command = statement.ToCommand(connection);
         using var reader = command.ExecuteReader();
         var ordinals = ResolveOrdinals<T>(reader, statement);
         if (!reader.Read())
             throw new InvalidOperationException("Sequence contains no elements.");
-        return T.Read(reader, ordinals);
+        return Materialize<T>(reader, ordinals);
     }
 
     public static async Task<T> QueryStringFirstAsync<T>(
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
-        where T : IStringThingRow<T>
     {
         await using var command = statement.ToCommand(connection);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var ordinals = ResolveOrdinals<T>(reader, statement);
         if (!await reader.ReadAsync(cancellationToken))
             throw new InvalidOperationException("Sequence contains no elements.");
-        return T.Read(reader, ordinals);
+        return Materialize<T>(reader, ordinals);
     }
 
     public static T? QueryStringFirstOrDefault<T>(
         this SqlConnection connection,
         SqlServerSql statement)
-        where T : IStringThingRow<T>
     {
         using var command = statement.ToCommand(connection);
         using var reader = command.ExecuteReader();
         var ordinals = ResolveOrdinals<T>(reader, statement);
         if (!reader.Read())
             return default;
-        return T.Read(reader, ordinals);
+        return Materialize<T>(reader, ordinals);
     }
 
     public static async Task<T?> QueryStringFirstOrDefaultAsync<T>(
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
-        where T : IStringThingRow<T>
     {
         await using var command = statement.ToCommand(connection);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var ordinals = ResolveOrdinals<T>(reader, statement);
         if (!await reader.ReadAsync(cancellationToken))
             return default;
-        return T.Read(reader, ordinals);
+        return Materialize<T>(reader, ordinals);
     }
 
     public static T QueryStringSingle<T>(
         this SqlConnection connection,
         SqlServerSql statement)
-        where T : IStringThingRow<T>
     {
         using var command = statement.ToCommand(connection);
         using var reader = command.ExecuteReader();
         var ordinals = ResolveOrdinals<T>(reader, statement);
         if (!reader.Read())
             throw new InvalidOperationException("Sequence contains no elements.");
-        var first = T.Read(reader, ordinals);
+        var first = Materialize<T>(reader, ordinals);
         if (reader.Read())
             throw new InvalidOperationException("Sequence contains more than one element.");
         return first;
@@ -101,14 +94,13 @@ public static class SqlServerResultExtensions
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
-        where T : IStringThingRow<T>
     {
         await using var command = statement.ToCommand(connection);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var ordinals = ResolveOrdinals<T>(reader, statement);
         if (!await reader.ReadAsync(cancellationToken))
             throw new InvalidOperationException("Sequence contains no elements.");
-        var first = T.Read(reader, ordinals);
+        var first = Materialize<T>(reader, ordinals);
         if (await reader.ReadAsync(cancellationToken))
             throw new InvalidOperationException("Sequence contains more than one element.");
         return first;
@@ -117,14 +109,13 @@ public static class SqlServerResultExtensions
     public static T? QueryStringSingleOrDefault<T>(
         this SqlConnection connection,
         SqlServerSql statement)
-        where T : IStringThingRow<T>
     {
         using var command = statement.ToCommand(connection);
         using var reader = command.ExecuteReader();
         var ordinals = ResolveOrdinals<T>(reader, statement);
         if (!reader.Read())
             return default;
-        var first = T.Read(reader, ordinals);
+        var first = Materialize<T>(reader, ordinals);
         if (reader.Read())
             throw new InvalidOperationException("Sequence contains more than one element.");
         return first;
@@ -134,14 +125,13 @@ public static class SqlServerResultExtensions
         this SqlConnection connection,
         SqlServerSql statement,
         CancellationToken cancellationToken = default)
-        where T : IStringThingRow<T>
     {
         await using var command = statement.ToCommand(connection);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var ordinals = ResolveOrdinals<T>(reader, statement);
         if (!await reader.ReadAsync(cancellationToken))
             return default;
-        var first = T.Read(reader, ordinals);
+        var first = Materialize<T>(reader, ordinals);
         if (await reader.ReadAsync(cancellationToken))
             throw new InvalidOperationException("Sequence contains more than one element.");
         return first;
@@ -200,13 +190,17 @@ public static class SqlServerResultExtensions
         return result is DBNull or null ? default : (T)Convert.ChangeType(result, typeof(T));
     }
 
+    private static readonly int[] _scalarOrdinals = [0];
+
     private static int[] ResolveOrdinals<T>(DbDataReader reader, SqlServerSql statement)
-        where T : IStringThingRow<T>
     {
+        if (!StringThingRowRegistry<T>.IsRegistered)
+            return _scalarOrdinals;
+
         if (statement.TryGetCachedOrdinals(typeof(T), out var cached))
             return cached;
 
-        var names = T.ColumnBindingOrder;
+        var names = StringThingRowRegistry<T>.ColumnBindingOrder;
         var ordinals = new int[names.Length];
         for (var i = 0; i < names.Length; i++)
             ordinals[i] = reader.GetOrdinal(names[i]);
@@ -214,23 +208,28 @@ public static class SqlServerResultExtensions
         return ordinals;
     }
 
+    private static T Materialize<T>(DbDataReader reader, int[] ordinals)
+    {
+        if (StringThingRowRegistry<T>.IsRegistered)
+            return StringThingRowRegistry<T>.Read(reader, ordinals);
+        return ScalarValue.Read<T>(reader, ordinals[0]);
+    }
+
     private static List<T> ReadAll<T>(DbDataReader reader, SqlServerSql statement)
-        where T : IStringThingRow<T>
     {
         var ordinals = ResolveOrdinals<T>(reader, statement);
         var list = new List<T>();
         while (reader.Read())
-            list.Add(T.Read(reader, ordinals));
+            list.Add(Materialize<T>(reader, ordinals));
         return list;
     }
 
     private static async Task<List<T>> ReadAllAsync<T>(DbDataReader reader, SqlServerSql statement, CancellationToken cancellationToken)
-        where T : IStringThingRow<T>
     {
         var ordinals = ResolveOrdinals<T>(reader, statement);
         var list = new List<T>();
         while (await reader.ReadAsync(cancellationToken))
-            list.Add(T.Read(reader, ordinals));
+            list.Add(Materialize<T>(reader, ordinals));
         return list;
     }
 }
