@@ -4,6 +4,8 @@ Interpolated SQL parameterization for .NET — injection-safe by construction, w
 
 Built on C# interpolated string handlers. The compiler binds every `{parameter}` to a typed parameter at build time, with no string concatenation.
 
+**Requires .NET 10.** All packages target `net10.0`.
+
 ## The idea
 
 ```csharp
@@ -43,12 +45,12 @@ All providers share: injection safety, parameter deduplication, composable fragm
 
 ## Packages
 
-| Package | Built on |
-|---------|----------|
-| `StringThing.Npgsql` | Npgsql |
-| `StringThing.SqlClient` | Microsoft.Data.SqlClient |
-| `StringThing.MySql` | MySqlConnector |
-| `StringThing.Sqlite` | Microsoft.Data.Sqlite |
+| Package | Built on | Installation |
+|---------|----------|--------------|
+| `StringThing.Npgsql` | Npgsql | [README](src/StringThing.Npgsql/README.md) |
+| `StringThing.SqlClient` | Microsoft.Data.SqlClient | [README](src/StringThing.SqlClient/README.md) |
+| `StringThing.MySql` | MySqlConnector | [README](src/StringThing.MySql/README.md) |
+| `StringThing.Sqlite` | Microsoft.Data.Sqlite | [README](src/StringThing.Sqlite/README.md) |
 
 Each provider includes AOT-compatible result mapping. Annotate row POCOs with `[StringThingRow] partial` and call `connection.QueryString<T>($"...")` — a source generator emits the materializer. See each provider's README for details.
 
