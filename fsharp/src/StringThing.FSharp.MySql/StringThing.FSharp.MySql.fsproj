@@ -17,6 +17,20 @@
 
   <ItemGroup>
     <ProjectReference Include="..\StringThing.FSharp\StringThing.FSharp.fsproj" />
+    <ProjectReference Include="..\StringThing.FSharp.MySql.Analyzers\StringThing.FSharp.MySql.Analyzers.fsproj"
+                      PrivateAssets="all"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\StringThing.FSharp.MySql.Analyzers\bin\$(Configuration)\net10.0\StringThing.FSharp.MySql.Analyzers.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/fs"
+          Visible="false" />
+    <None Include="..\StringThing.FSharp.Analyzers.Core\bin\$(Configuration)\net10.0\StringThing.FSharp.Analyzers.Core.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/fs"
+          Visible="false" />
   </ItemGroup>
 
 </Project>

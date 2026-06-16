@@ -3,9 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <Description>Provider-agnostic core for StringThing.FSharp analyzers. Each provider supplies a ProviderConfig record and the shared analyzer logic runs against it.</Description>
+    <Description>Provider-agnostic core for StringThing.FSharp analyzers. Each provider supplies a ProviderConfig record and the shared analyzer logic runs against it. Distributed as a bundled DLL inside each provider's NuGet package, not as a standalone package.</Description>
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/fsharp/src/StringThing.FSharp.Analyzers.Core</PackageProjectUrl>
     <DevelopmentDependency>true</DevelopmentDependency>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

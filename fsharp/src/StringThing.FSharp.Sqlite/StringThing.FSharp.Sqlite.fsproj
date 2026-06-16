@@ -13,10 +13,29 @@
 
   <ItemGroup>
     <ProjectReference Include="..\StringThing.FSharp\StringThing.FSharp.fsproj" />
+    <!-- Build the analyzer (and transitively Analyzers.Core) so the DLLs exist for packing.
+         PrivateAssets=all hides them from the NuGet dependency graph; the DLLs are packed
+         directly into analyzers/dotnet/fs/ below so consumers get analyzer activation just
+         from installing this provider package. ReferenceOutputAssembly=false keeps them
+         out of the provider's runtime closure. -->
+    <ProjectReference Include="..\StringThing.FSharp.Sqlite.Analyzers\StringThing.FSharp.Sqlite.Analyzers.fsproj"
+                      PrivateAssets="all"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\StringThing.FSharp.Sqlite.Analyzers\bin\$(Configuration)\net10.0\StringThing.FSharp.Sqlite.Analyzers.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/fs"
+          Visible="false" />
+    <None Include="..\StringThing.FSharp.Analyzers.Core\bin\$(Configuration)\net10.0\StringThing.FSharp.Analyzers.Core.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/fs"
+          Visible="false" />
   </ItemGroup>
 
 </Project>

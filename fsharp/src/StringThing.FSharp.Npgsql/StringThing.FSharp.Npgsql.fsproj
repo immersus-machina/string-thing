@@ -17,6 +17,20 @@
 
   <ItemGroup>
     <ProjectReference Include="..\StringThing.FSharp\StringThing.FSharp.fsproj" />
+    <ProjectReference Include="..\StringThing.FSharp.Npgsql.Analyzers\StringThing.FSharp.Npgsql.Analyzers.fsproj"
+                      PrivateAssets="all"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\StringThing.FSharp.Npgsql.Analyzers\bin\$(Configuration)\net10.0\StringThing.FSharp.Npgsql.Analyzers.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/fs"
+          Visible="false" />
+    <None Include="..\StringThing.FSharp.Analyzers.Core\bin\$(Configuration)\net10.0\StringThing.FSharp.Analyzers.Core.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/fs"
+          Visible="false" />
   </ItemGroup>
 
 </Project>
