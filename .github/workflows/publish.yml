@@ -16,8 +16,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.0.x'
-          dotnet-quality: 'preview'
+          dotnet-version: "10.0.x"
+          dotnet-quality: "preview"
 
       - name: Extract version from tag
         id: version
@@ -32,13 +32,21 @@ jobs:
       - name: Test
         run: dotnet test --no-build -c Release
 
-      - name: Pack provider packages
+      - name: Pack C# packages
         run: |
           dotnet pack src/StringThing.Core --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
           dotnet pack src/StringThing.Npgsql --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
           dotnet pack src/StringThing.SqlClient --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
           dotnet pack src/StringThing.MySql --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
           dotnet pack src/StringThing.Sqlite --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
+
+      - name: Pack F# packages
+        run: |
+          dotnet pack fsharp/src/StringThing.FSharp --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
+          dotnet pack fsharp/src/StringThing.FSharp.Sqlite --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
+          dotnet pack fsharp/src/StringThing.FSharp.MySql --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
+          dotnet pack fsharp/src/StringThing.FSharp.SqlClient --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
+          dotnet pack fsharp/src/StringThing.FSharp.Npgsql --no-build -c Release -p:Version=${{ steps.version.outputs.VERSION }} -o ./artifacts
 
       - name: Push to NuGet
         run: |

@@ -5,7 +5,12 @@
     <Nullable>enable</Nullable>
     <Description>Injection-safe interpolated SQL for SQLite, F# edition. Computation-expression SQL builder + applicative row reader.</Description>
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/fsharp/src/StringThing.FSharp.Sqlite</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="Sqlite.fs" />

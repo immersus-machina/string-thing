@@ -5,7 +5,12 @@
     <Nullable>enable</Nullable>
     <Description>Core abstractions for StringThing.FSharp — provider-agnostic SQL element / fragment types, base CE builder, and applicative row reader.</Description>
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/fsharp/src/StringThing.FSharp</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="StringThing.FSharp.Sqlite" />

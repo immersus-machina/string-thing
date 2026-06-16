@@ -5,7 +5,12 @@
     <Nullable>enable</Nullable>
     <Description>Injection-safe interpolated SQL for MySQL via MySqlConnector, F# edition. Part of StringThing.FSharp.</Description>
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/fsharp/src/StringThing.FSharp.MySql</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="MySql.fs" />

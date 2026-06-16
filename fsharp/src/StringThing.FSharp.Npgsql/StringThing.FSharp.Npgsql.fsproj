@@ -5,7 +5,12 @@
     <Nullable>enable</Nullable>
     <Description>Injection-safe interpolated SQL for PostgreSQL via Npgsql, F# edition. Part of StringThing.FSharp.</Description>
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/fsharp/src/StringThing.FSharp.Npgsql</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="Postgres.fs" />

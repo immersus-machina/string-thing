@@ -5,7 +5,12 @@
     <Nullable>enable</Nullable>
     <Description>Injection-safe interpolated SQL for SQL Server via Microsoft.Data.SqlClient, F# edition. Part of StringThing.FSharp.</Description>
     <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/fsharp/src/StringThing.FSharp.SqlClient</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="SqlServer.fs" />
