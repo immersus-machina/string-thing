@@ -1,6 +1,6 @@
 # StringThing.FSharp
 
-Injection-safe interpolated SQL for F#. Call sites read like a SQL statement, values stay typed, and an optional per-provider analyzer catches the rest at compile time.
+Injection-safe interpolated SQL for F#. Call sites read like a SQL statement, values stay typed, and a per-provider analyzer (bundled in each provider package) catches the rest at compile time.
 
 ```fsharp
 open StringThing.FSharp
@@ -15,7 +15,7 @@ let user =
         """
 ```
 
-F# `$""" """` triple-quoted interpolation lowers to `FormattableString`; the provider walks it at runtime and dispatches each `{value}` hole to a typed parameter for its driver (`SqliteParameter`, `MySqlParameter`, `SqlParameter`, `NpgsqlParameter`). Unsupported types throw at runtime with a helpful message — and the optional per-provider analyzer elevates those failures to compile-time errors in your editor, plus enforces that no opaque `FormattableString` slips through.
+F# `$""" """` triple-quoted interpolation lowers to `FormattableString`; the provider walks it at runtime and dispatches each `{value}` hole to a typed parameter for its driver (`SqliteParameter`, `MySqlParameter`, `SqlParameter`, `NpgsqlParameter`). Unsupported types throw at runtime with a helpful message — and the bundled per-provider analyzer elevates those failures to compile-time errors in your editor, plus enforces that no opaque `FormattableString` slips through.
 
 ## Row readers
 

@@ -86,7 +86,7 @@ let email : string option =
 
 `bool`, `int`, `int64`, `float`, `string`, `byte[]`, `Guid`, `DateTime`, and `'T option` for any of the above. Embedded `SqliteFragment` values (see below) and `obj` returns from `Sqlite.unsafe` / `Sqlite.inList` / `Sqlite.insertRows`.
 
-Unsupported types throw `InvalidOperationException` at runtime. Install [`StringThing.FSharp.Sqlite.Analyzers`](../StringThing.FSharp.Sqlite.Analyzers/) to make this a compile-time error.
+Unsupported types throw `InvalidOperationException` at runtime. The bundled analyzer makes this a compile-time error.
 
 ## SqliteStatement and SqliteFragment
 
