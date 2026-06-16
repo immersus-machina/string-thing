@@ -27,12 +27,15 @@
   <Folder Name="/fsharp-src/">
     <Project Path="fsharp/src/StringThing.FSharp/StringThing.FSharp.fsproj" />
     <Project Path="fsharp/src/StringThing.FSharp.Sqlite/StringThing.FSharp.Sqlite.fsproj" />
+    <Project Path="fsharp/src/StringThing.FSharp.MySql/StringThing.FSharp.MySql.fsproj" />
     <Project Path="fsharp/src/StringThing.FSharp.Analyzers.Core/StringThing.FSharp.Analyzers.Core.fsproj" />
     <Project Path="fsharp/src/StringThing.FSharp.Sqlite.Analyzers/StringThing.FSharp.Sqlite.Analyzers.fsproj" />
+    <Project Path="fsharp/src/StringThing.FSharp.MySql.Analyzers/StringThing.FSharp.MySql.Analyzers.fsproj" />
   </Folder>
   <Folder Name="/fsharp-test/">
     <Project Path="fsharp/test/StringThing.FSharp.Sqlite.IntegrationTests/StringThing.FSharp.Sqlite.IntegrationTests.fsproj" />
     <Project Path="fsharp/test/StringThing.FSharp.Sqlite.Analyzers.Tests/StringThing.FSharp.Sqlite.Analyzers.Tests.fsproj" />
+    <Project Path="fsharp/test/StringThing.FSharp.MySql.IntegrationTests/StringThing.FSharp.MySql.IntegrationTests.fsproj" />
   </Folder>
   <Folder Name="/fsharp-benchmarks/">
     <Project Path="fsharp/benchmarks/StringThing.FSharp.Benchmarks/StringThing.FSharp.Benchmarks.fsproj" />
