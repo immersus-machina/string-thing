@@ -10,6 +10,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="StringThing.FSharp.Sqlite" />
     <InternalsVisibleTo Include="StringThing.FSharp.MySql" />
+    <InternalsVisibleTo Include="StringThing.FSharp.SqlClient" />
   </ItemGroup>
 
   <ItemGroup>

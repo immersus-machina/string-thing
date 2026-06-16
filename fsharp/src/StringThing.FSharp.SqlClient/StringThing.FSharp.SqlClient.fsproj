@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <Description>Injection-safe interpolated SQL for SQL Server via Microsoft.Data.SqlClient, F# edition. Part of StringThing.FSharp.</Description>
+    <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/fsharp/src/StringThing.FSharp.SqlClient</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="SqlServer.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StringThing.FSharp\StringThing.FSharp.fsproj" />
+  </ItemGroup>
+
+</Project>
