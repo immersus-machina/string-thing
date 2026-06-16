@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <Description>F# analyzers for StringThing.FSharp.Npgsql — catches unsupported parameter types and untraceable FormattableStrings in interpolated SQL statements at edit time.</Description>
+    <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/fsharp/src/StringThing.FSharp.Npgsql.Analyzers</PackageProjectUrl>
+    <DevelopmentDependency>true</DevelopmentDependency>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="SupportedParameterTypeAnalyzer.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Analyzers.SDK" Version="0.31.0" />
+    <PackageReference Update="FSharp.Core" Version="9.0.300" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StringThing.FSharp.Analyzers.Core\StringThing.FSharp.Analyzers.Core.fsproj" />
+  </ItemGroup>
+
+</Project>
