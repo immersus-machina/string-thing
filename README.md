@@ -6,6 +6,8 @@ Built on C# interpolated string handlers. The compiler binds every `{parameter}`
 
 **Requires .NET 10.** All packages target `net10.0`.
 
+For F# users: see [`fsharp/`](fsharp/).
+
 ## The idea
 
 ```csharp
