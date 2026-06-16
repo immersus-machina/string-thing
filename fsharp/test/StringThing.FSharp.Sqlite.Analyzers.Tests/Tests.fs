@@ -144,7 +144,7 @@ let ``ST-FS-003: factored Sqlite.statement with annotation is allowed`` () =
     let source = fixturePreamble + """
 let test () =
     let id = 1L
-    let stmt : SqlStatement = Sqlite.statement $"SELECT id, name FROM users WHERE id = {id}"
+    let stmt : SqliteStatement = Sqlite.statement $"SELECT id, name FROM users WHERE id = {id}"
     let _ = connection.QueryStringSingle userRow stmt
     ()
 """
@@ -158,7 +158,7 @@ let test () =
 [<Fact>]
 let ``ST-FS-003: helper function returning SqlStatement is allowed`` () =
     let source = fixturePreamble + """
-let buildQuery (id: int64) : SqlStatement =
+let buildQuery (id: int64) : SqliteStatement =
     Sqlite.statement $"SELECT id, name FROM users WHERE id = {id}"
 let test () =
     let _ = connection.QueryStringSingle userRow (buildQuery 1L)
@@ -180,7 +180,7 @@ let test () =
 [<Fact>]
 let ``ST-FS-003: parameter typed SqlStatement is allowed`` () =
     let source = fixturePreamble + """
-let runIt (stmt: SqlStatement) =
+let runIt (stmt: SqliteStatement) =
     let _ = connection.QueryStringSingle userRow stmt
     ()
 """

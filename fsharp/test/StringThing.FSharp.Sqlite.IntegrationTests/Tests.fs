@@ -253,7 +253,7 @@ let ``Sqlite.inList throws on empty sequence`` () =
 
 type InsertUser = { Id: int64; Name: string; Email: string option }
 
-let insertUserRow (u: InsertUser) : SqlFragment =
+let insertUserRow (u: InsertUser) : SqliteFragment =
     Sqlite.fragment $"({u.Id}, {u.Name}, {u.Email}, 1)"
 
 [<Fact>]

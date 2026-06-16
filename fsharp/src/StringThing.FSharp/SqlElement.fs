@@ -11,14 +11,3 @@ type internal FragmentNode<'TParameter> =
     | NodeEmpty
     | NodeOne of SqlElement<'TParameter>
     | NodePair of FragmentNode<'TParameter> * FragmentNode<'TParameter>
-
-[<NoComparison; NoEquality>]
-type SqlFragment<'TParameter> =
-    internal SqlFragment of FragmentNode<'TParameter>
-
-[<NoComparison; NoEquality>]
-type Sql<'TParameter> =
-    internal {
-        Root: FragmentNode<'TParameter>
-        CallSite: string * int
-    }

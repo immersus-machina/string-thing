@@ -17,4 +17,8 @@
     <PackageReference Update="FSharp.Core" Version="9.0.300" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\StringThing.FSharp.Analyzers.Core\StringThing.FSharp.Analyzers.Core.fsproj" />
+  </ItemGroup>
+
 </Project>

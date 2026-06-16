@@ -13,9 +13,9 @@
 
   <ItemGroup>
     <Compile Include="SqlElement.fs" />
+    <Compile Include="SqlStatement.fs" />
     <Compile Include="OrdinalCache.fs" />
     <Compile Include="SqlExecution.fs" />
-    <Compile Include="SqlBuilder.fs" />
     <Compile Include="RowReader.fs" />
   </ItemGroup>
 

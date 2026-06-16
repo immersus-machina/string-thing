@@ -9,22 +9,12 @@ open System.Text.RegularExpressions
 open Microsoft.Data.Sqlite
 open StringThing.FSharp
 
-// ---- Nominal wrapper types ----
-// Both wrap a FormattableString. F# `$""` doesn't lower to user types, so the
-// op_Implicit conversions let users write `connection.X stmt` or embed `{frag}`
-// after binding `let stmt = Sqlite.statement $"..."` / `let frag = Sqlite.fragment $"..."`.
-// The analyzer in StringThing.FSharp.Sqlite.Analyzers enforces that splice points only
-// accept inline `$""` or values of these types — raw FormattableString variables are rejected.
+// ---- Provider-specific aliases for the generic wrapper types from Core ----
+// `SqlStatement<'TParameter>` and `SqlFragment<'TParameter>` live in StringThing.FSharp
+// so all providers share the same nominal types — only the generic instantiation differs.
 
-[<Sealed; NoComparison; NoEquality>]
-type SqlStatement internal (formattable: FormattableString) =
-    member internal _.Formattable = formattable
-    static member op_Implicit (statement: SqlStatement) : FormattableString = statement.Formattable
-
-[<Sealed; NoComparison; NoEquality>]
-type SqlFragment internal (formattable: FormattableString) =
-    member internal _.Formattable = formattable
-    static member op_Implicit (fragment: SqlFragment) : FormattableString = fragment.Formattable
+type SqliteStatement = SqlStatement<SqliteParameter>
+type SqliteFragment = SqlFragment<SqliteParameter>
 
 // ---- Marker types for special interpolation arguments ----
 
@@ -32,7 +22,7 @@ type internal UnsafeMarker = { Raw: string }
 
 type internal InListMarker = { Items: obj[] }
 
-type internal InsertRowsMarker = { Rows: SqlFragment[] }
+type internal InsertRowsMarker = { Rows: SqliteFragment[] }
 
 // ---- Value -> SqlElement dispatch ----
 
@@ -60,9 +50,9 @@ module internal ParameterDispatch =
                     if i > 0 then yield Literal ", "
                     yield! ofFormattable marker.Rows.[i].Formattable
             }
-        | :? SqlFragment as fragment ->
+        | :? SqliteFragment as fragment ->
             ofFormattable fragment.Formattable
-        | :? SqlStatement as statement ->
+        | :? SqliteStatement as statement ->
             ofFormattable statement.Formattable
         | :? FormattableString as nested ->
             ofFormattable nested
@@ -118,12 +108,12 @@ type Sqlite =
     /// Wraps an interpolated string as a top-level SQL statement. Lets a query be
     /// constructed outside the call site (e.g. inside a helper function) while still
     /// satisfying the analyzer's "no raw FormattableString" rule.
-    static member statement (formattable: FormattableString) : SqlStatement =
+    static member statement (formattable: FormattableString) : SqliteStatement =
         SqlStatement(formattable)
 
     /// Wraps an interpolated string as a composable SQL fragment. Pass the result
     /// through a `$""` hole to splice the fragment into a larger statement.
-    static member fragment (formattable: FormattableString) : SqlFragment =
+    static member fragment (formattable: FormattableString) : SqliteFragment =
         SqlFragment(formattable)
 
     /// Splice raw, unparameterized SQL text. The caller takes responsibility for safety.
@@ -139,7 +129,7 @@ type Sqlite =
 
     /// Compose multiple row fragments into a comma-separated VALUES list for multi-row INSERTs.
     /// Throws if the sequence is empty.
-    static member insertRows (toRow: 'T -> SqlFragment) (rows: 'T seq) : obj =
+    static member insertRows (toRow: 'T -> SqliteFragment) (rows: 'T seq) : obj =
         let fragments = rows |> Seq.map toRow |> Seq.toArray
         if fragments.Length = 0 then invalidArg "rows" "At least one row is required."
         { Rows = fragments } :> obj

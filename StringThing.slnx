@@ -27,6 +27,7 @@
   <Folder Name="/fsharp-src/">
     <Project Path="fsharp/src/StringThing.FSharp/StringThing.FSharp.fsproj" />
     <Project Path="fsharp/src/StringThing.FSharp.Sqlite/StringThing.FSharp.Sqlite.fsproj" />
+    <Project Path="fsharp/src/StringThing.FSharp.Analyzers.Core/StringThing.FSharp.Analyzers.Core.fsproj" />
     <Project Path="fsharp/src/StringThing.FSharp.Sqlite.Analyzers/StringThing.FSharp.Sqlite.Analyzers.fsproj" />
   </Folder>
   <Folder Name="/fsharp-test/">
