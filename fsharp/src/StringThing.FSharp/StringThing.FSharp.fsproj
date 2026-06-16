@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <Description>Core abstractions for StringThing.FSharp — provider-agnostic SQL element / fragment types, base CE builder, and applicative row reader.</Description>
+    <PackageProjectUrl>https://github.com/immersus-machina/string-thing/tree/main/fsharp/src/StringThing.FSharp</PackageProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="StringThing.FSharp.Sqlite" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="SqlElement.fs" />
+    <Compile Include="OrdinalCache.fs" />
+    <Compile Include="SqlExecution.fs" />
+    <Compile Include="SqlBuilder.fs" />
+    <Compile Include="RowReader.fs" />
+  </ItemGroup>
+
+</Project>
