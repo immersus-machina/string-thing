@@ -25,13 +25,14 @@ let private referencedDllPaths () : string list =
     let appDir =
         Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) |> Option.ofObj
         |> Option.defaultValue AppContext.BaseDirectory
-    let runtimeDir = Path.GetDirectoryName(typeof<obj>.Assembly.Location)
+    let runtimeDir = Path.GetDirectoryName(typeof<obj>.Assembly.Location) |> Option.ofObj
     let runtimeDlls =
-        if Directory.Exists runtimeDir then
-            Directory.GetFiles(runtimeDir, "*.dll")
+        match runtimeDir with
+        | Some dir when Directory.Exists dir ->
+            Directory.GetFiles(dir, "*.dll")
             |> Array.filter isManagedAssembly
             |> Array.toList
-        else []
+        | _ -> []
     let appDlls = Directory.GetFiles(appDir, "*.dll") |> Array.filter isManagedAssembly |> Array.toList
     appDlls @ runtimeDlls
     |> List.distinctBy (fun p -> Path.GetFileName(p))
